@@ -69,8 +69,7 @@ class AuthController extends Controller
             // =========================
             try {
                 $factory = (new Factory)
-                    ->withServiceAccount(storage_path('app/firebase-key.json'));
-
+                    ->withServiceAccount(storage_path('app/firebase/firebase-service-account.json'));
                 $firestore = $factory->createFirestore();
                 $db = $firestore->database();
 

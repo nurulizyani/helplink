@@ -44,7 +44,9 @@ class OfferController extends Controller
                 $file = $request->file('image');
                 $filename = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('offers', $filename, 'public');
-                $imagePath = 'storage/offers/' . $filename;
+                
+                $imagePath = 'offers/' . $filename;
+
             }
 
             $offer = Offer::create([
@@ -207,17 +209,16 @@ class OfferController extends Controller
             ]);
 
             if ($request->hasFile('image')) {
-                if ($offer->image) {
-                    Storage::disk('public')->delete(
-                        str_replace('storage/', '', $offer->image)
-                    );
-                }
+    if ($offer->image) {
+        Storage::disk('public')->delete($offer->image);
+    }
 
-                $file = $request->file('image');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('offers', $filename, 'public');
-                $validated['image'] = 'storage/offers/' . $filename;
-            }
+    $file = $request->file('image');
+    $filename = time() . '_' . $file->getClientOriginalName();
+    $file->storeAs('offers', $filename, 'public');
+
+    $validated['image'] = 'offers/' . $filename;
+}
 
             $offer->update($validated);
 
@@ -265,10 +266,8 @@ class OfferController extends Controller
             }
 
             if ($offer->image) {
-                Storage::disk('public')->delete(
-                    str_replace('storage/', '', $offer->image)
-                );
-            }
+    Storage::disk('public')->delete($offer->image);
+}
 
             $offer->delete();
 

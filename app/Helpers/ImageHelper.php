@@ -9,16 +9,17 @@ class ImageHelper
     public static function url($path)
     {
         if (!$path) {
-            return asset('images/placeholder.png'); 
+            return asset('images/placeholder.png');
         }
 
+        $path = trim($path);
         $path = ltrim($path, '/');
 
-        // normalize mixed paths
-        if (str_starts_with($path, 'storage/')) {
-            $path = substr($path, 8);
-        }
+        // normalize old data
+        $path = preg_replace('#^storage/#', '', $path);
+        $path = preg_replace('#^public/#', '', $path);
 
         return Storage::url($path);
     }
 }
+

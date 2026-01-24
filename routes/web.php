@@ -19,6 +19,15 @@ use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Admin\NotificationController;
 
+Route::get('/storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath);
+})->where('path', '.*');
 
 /*
 |--------------------------------------------------------------------------
@@ -117,7 +126,7 @@ Route::post('/telegram/webhook', [TelegramController::class, 'webhook']);
 
 Route::get('/firebase-test', function () {
     $factory = (new Factory)
-        ->withServiceAccount(storage_path('app/firebase-key.json'))
+        ->withServiceAccount(storage_path('app/firebase/firebase-service-account.json'))
         ->withDatabaseUri(env('FIREBASE_DATABASE_URL'));
 
     $database = $factory->createDatabase();

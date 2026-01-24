@@ -20,7 +20,7 @@ class FCMHelper
     try {
         // 1️⃣ Load Firebase credentials
         $client = new \Google\Client();
-        $client->setAuthConfig(storage_path('app/firebase-key.json'));
+        $client->setAuthConfig(storage_path('app/firebase/firebase-service-account.json'));
         $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
         $accessToken = $client->fetchAccessTokenWithAssertion()['access_token'];
 

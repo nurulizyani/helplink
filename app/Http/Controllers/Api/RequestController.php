@@ -46,7 +46,8 @@ class RequestController extends Controller
                 $image = $request->file('image');
                 $filename = time() . '_img_' . $image->getClientOriginalName();
                 $image->storeAs('requests/images', $filename, 'public');
-                $imagePath = 'storage/requests/images/' . $filename;
+                $imagePath = 'requests/images/' . $filename;
+
             }
 
             /* ================= DOCUMENT UPLOAD ================= */
@@ -57,7 +58,8 @@ class RequestController extends Controller
                 $doc = $request->file('document');
                 $filename = time() . '_doc_' . $doc->getClientOriginalName();
                 $doc->storeAs('requests/documents', $filename, 'public');
-                $documentPath = 'storage/requests/documents/' . $filename;
+                $documentPath = 'requests/documents/' . $filename;
+
 
                 $absoluteDocumentPath = storage_path(
                     'app/public/requests/documents/' . $filename
@@ -313,7 +315,9 @@ public function update(Request $request, $id)
             $image = $request->file('image');
             $filename = time() . '_img_' . $image->getClientOriginalName();
             $image->storeAs('requests/images', $filename, 'public');
-            $validated['image'] = 'storage/requests/images/' . $filename;
+$imagePath = 'requests/images/' . $filename;
+            $validated['image'] = 'requests/images/' . $filename;
+
         }
 
         /* ================= DOCUMENT UPDATE ================= */
@@ -327,7 +331,10 @@ public function update(Request $request, $id)
             $doc = $request->file('document');
             $filename = time() . '_doc_' . $doc->getClientOriginalName();
             $doc->storeAs('requests/documents', $filename, 'public');
-            $validated['document'] = 'storage/requests/documents/' . $filename;
+$documentPath = 'requests/documents/' . $filename;
+
+            $validated['document'] = 'requests/documents/' . $filename;
+
         }
 
         $helpRequest->update($validated);

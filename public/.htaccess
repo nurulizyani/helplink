@@ -5,8 +5,9 @@
 
     RewriteEngine On
 
-    # Allow access to storage images
-    RewriteRule ^storage/(.*)$ storage/$1 [L]
+    # 🔥 ABSOLUTE BYPASS UNTUK STORAGE (JANGAN MASUK LARAVEL)
+    RewriteCond %{REQUEST_URI} ^/storage/ [NC]
+    RewriteRule .* - [L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

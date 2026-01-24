@@ -9,7 +9,7 @@
     {{-- HEADER --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold text-primary mb-1">
+            <h2 class="page-title fw-bold mb-1">
                 <i class="fas fa-bell me-2"></i> All Notifications
             </h2>
             <small class="text-muted">

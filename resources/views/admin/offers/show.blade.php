@@ -11,7 +11,7 @@
     {{-- ================= PAGE HEADER ================= --}}
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
         <div>
-            <h2 class="fw-bold text-primary mb-1">
+            <h2 class="page-title fw-bold mb-1">
                 <i class="fas fa-box-open me-2"></i> Offer Details
             </h2>
             <small class="text-muted">

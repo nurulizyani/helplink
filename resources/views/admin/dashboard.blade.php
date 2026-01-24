@@ -49,7 +49,7 @@
     {{-- ================= HEADER ================= --}}
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
-            <h2 class="fw-bold text-primary mb-0">Dashboard</h2>
+            <h2 class="page-title fw-bold mb-1">Dashboard</h2>
             <small class="text-muted">
                 Overview of system performance and recent activities
             </small>

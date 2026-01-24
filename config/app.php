@@ -67,14 +67,10 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🔥 FIREBASE SERVICE PROVIDER (INI YANG KAU TAK ADA)
-        |--------------------------------------------------------------------------
-        */
-       // Kreait\Laravel\Firebase\ServiceProvider::class,
-/*App\Providers\FirebaseServiceProvider::class,*/
+        App\Providers\FirebaseServiceProvider::class,
 
+      
+       Kreait\Laravel\Firebase\ServiceProvider::class,
     ],
 
         /*

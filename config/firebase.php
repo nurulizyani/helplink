@@ -2,10 +2,8 @@
 
 return [
 
-    'credentials' => [
-        'file' => env('FIREBASE_CREDENTIALS'),
-    ],
+    'credentials' => storage_path('app/firebase/firebase-service-account.json'),
 
-    'project_id' => env('FIREBASE_PROJECT_ID'),
+    'project_id' => 'helplink-2e363',
 
 ];

@@ -8,15 +8,25 @@ use Kreait\Firebase\Auth;
 
 class FirebaseServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
-        $this->app->singleton(Auth::class, function () {
+        $this->app->singleton(Auth::class, function ($app) {
+
+            $credentials = config('firebase.credentials');
+            $projectId  = config('firebase.project_id');
+
+            if (!$credentials || !$projectId) {
+                throw new \RuntimeException('Firebase credentials or project_id missing');
+            }
 
             $factory = (new Factory)
-                ->withServiceAccount(config('firebase.credentials.file'))
-                ->withProjectId(config('firebase.project_id'));
+                ->withServiceAccount($credentials)
+                ->withProjectId($projectId);
 
             return $factory->createAuth();
         });
+
+        // alias
+        $this->app->alias(Auth::class, 'firebase.auth');
     }
 }

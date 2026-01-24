@@ -43,8 +43,4 @@ return [
     'project_id' => env('FIREBASE_PROJECT_ID'),
 ],
 
-file_get_contents(
-    base_path(env('FIREBASE_CREDENTIALS'))
-)
-
 ];

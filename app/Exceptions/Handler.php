@@ -31,13 +31,8 @@ class Handler extends ExceptionHandler
      * Handle unauthenticated user redirects.
      */
     protected function unauthenticated($request, AuthenticationException $exception)
-    {
-        // ✅ If admin route, redirect to admin login
-        if ($request->is('admin') || $request->is('admin/*')) {
-            return redirect()->guest(route('admin.login'));
-        }
+{
+    return redirect()->guest(route('admin.login'));
+}
 
-        // 👤 Otherwise redirect to normal user login
-        return redirect()->guest(route('login'));
-    }
 }
