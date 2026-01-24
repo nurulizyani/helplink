@@ -3,8 +3,6 @@
 @section('title', 'Offer Details')
 @section('page-title', 'Offer Details')
 
-@php use App\Helpers\ImageHelper; @endphp
-
 @section('content')
 <div class="container py-4">
 
@@ -33,8 +31,8 @@
                 {{-- ================= OFFER IMAGE ================= --}}
                 <div class="col-md-4">
                     <div class="border rounded-3 p-3 bg-light text-center">
-                        @if($offer->image)
-                            <img src="{{ ImageHelper::url($offer->image) }}"
+                        @if($offer->image_url)
+                            <img src="{{ $offer->image_url }}"
                                  alt="Offer Image"
                                  class="img-fluid rounded"
                                  style="max-height:360px;object-fit:contain;">
@@ -58,33 +56,33 @@
                             </small>
                         </div>
 
-                    {{-- STATUS BADGE --}}
-                    @switch($offer->status)
+                        {{-- STATUS BADGE --}}
+                        @switch($offer->status)
 
-                        @case('available')
-                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                Available
-                            </span>
-                            @break
+                            @case('available')
+                                <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+                                    Available
+                                </span>
+                                @break
 
-                        @case('claimed')
-                            <span class="badge rounded-pill bg-info-subtle text-info px-3 py-2">
-                                Claimed
-                            </span>
-                            @break
+                            @case('claimed')
+                                <span class="badge rounded-pill bg-info-subtle text-info px-3 py-2">
+                                    Claimed
+                                </span>
+                                @break
 
-                        @case('completed')
-                            <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3 py-2">
-                                Completed
-                            </span>
-                            @break
+                            @case('completed')
+                                <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3 py-2">
+                                    Completed
+                                </span>
+                                @break
 
-                        @default
-                            <span class="badge rounded-pill bg-light text-muted px-3 py-2">
-                                {{ ucfirst($offer->status) }}
-                            </span>
-                    @endswitch
-                </div>
+                            @default
+                                <span class="badge rounded-pill bg-light text-muted px-3 py-2">
+                                    {{ ucfirst($offer->status) }}
+                                </span>
+                        @endswitch
+                    </div>
 
                     <hr>
 

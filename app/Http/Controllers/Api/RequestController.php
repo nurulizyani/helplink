@@ -307,32 +307,26 @@ public function update(Request $request, $id)
         /* ================= IMAGE UPDATE ================= */
         if ($request->hasFile('image')) {
             if ($helpRequest->image) {
-                Storage::disk('public')->delete(
-                    str_replace('storage/', '', $helpRequest->image)
-                );
+                Storage::disk('public')->delete($helpRequest->image);
             }
 
             $image = $request->file('image');
             $filename = time() . '_img_' . $image->getClientOriginalName();
             $image->storeAs('requests/images', $filename, 'public');
-$imagePath = 'requests/images/' . $filename;
+            $imagePath = 'requests/images/' . $filename;
             $validated['image'] = 'requests/images/' . $filename;
-
         }
 
         /* ================= DOCUMENT UPDATE ================= */
         if ($request->hasFile('document')) {
             if ($helpRequest->document) {
-                Storage::disk('public')->delete(
-                    str_replace('storage/', '', $helpRequest->document)
-                );
+                Storage::disk('public')->delete($helpRequest->document);
             }
 
             $doc = $request->file('document');
             $filename = time() . '_doc_' . $doc->getClientOriginalName();
             $doc->storeAs('requests/documents', $filename, 'public');
-$documentPath = 'requests/documents/' . $filename;
-
+            $documentPath = 'requests/documents/' . $filename;
             $validated['document'] = 'requests/documents/' . $filename;
 
         }
@@ -356,7 +350,4 @@ $documentPath = 'requests/documents/' . $filename;
         ], 500);
     }
 }
-
-
-
 }

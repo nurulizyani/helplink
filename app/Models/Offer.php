@@ -20,7 +20,7 @@ class Offer extends Model
     'description',
     'quantity',
     'category',
-    'address',          // ✅ keep only 'address' (your controller & Flutter use this)
+    'address',          
     'latitude',
     'longitude',
     'delivery_type',
@@ -40,4 +40,15 @@ class Offer extends Model
     {
         return $this->hasMany(Claim::class, 'offer_id', 'offer_id');
     }
+    protected $appends = [
+    'image_url',
+];
+
+public function getImageUrlAttribute()
+{
+    return $this->image
+        ? asset('storage/' . $this->image)
+        : null;
+}
+
 }

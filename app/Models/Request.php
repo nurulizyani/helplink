@@ -27,15 +27,12 @@ class Request extends Model
         'address',
         'latitude',
         'longitude',
-        'image',            // gambar sokongan
-        'document',         // dokumen sokongan
-        'ocr_text',         // (LEGACY – boleh kekal)
-        'status',           // pending, approved, rejected, fulfilled
-
-
+        'image',            // primary supporting image
+        'document',         // supporting document (bill, slip, etc)
+        'status',           // pending | approved | rejected | fulfilled
         'admin_remark',
-        
-        // 🔥 AI FIELDS
+
+        // AI ANALYSIS FIELDS
         'ai_document_type',
         'ai_summary',
         'ai_extracted_data',
@@ -49,9 +46,22 @@ class Request extends Model
      */
     protected $casts = [
         'ai_extracted_data' => 'array',
-        'latitude'  => 'float',
-        'longitude' => 'float',
-        'ai_confidence' => 'integer',
+        'latitude'          => 'float',
+        'longitude'         => 'float',
+        'ai_confidence'     => 'integer',
+    ];
+
+    /**
+     * =========================
+     * APPENDED ATTRIBUTES
+     * =========================
+     * These fields will be automatically included
+     * in API responses (JSON)
+     */
+    protected $appends = [
+        'image_url',
+        'document_url',
+        'status_badge',
     ];
 
     /**
@@ -60,25 +70,19 @@ class Request extends Model
      * =========================
      */
 
-    // 🔗 Request dibuat oleh User
+    // Request belongs to a user
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // 🔗 Satu request boleh ada banyak gambar sokongan
-    public function images()
-    {
-        return $this->hasMany(RequestImage::class, 'request_id');
-    }
-
-    // 🔗 Request boleh ada banyak claim (penderma)
+    // Request claims (helpers)
     public function claimRequests()
     {
         return $this->hasMany(ClaimRequest::class, 'request_id');
     }
 
-    // 🔗 Claim yang telah selesai (fulfilled)
+    // Completed claim (fulfilled)
     public function completedClaim()
     {
         return $this->hasOne(ClaimRequest::class, 'request_id')
@@ -87,10 +91,31 @@ class Request extends Model
 
     /**
      * =========================
-     * HELPER ATTRIBUTES (OPTIONAL, UI CANTIK)
+     * ACCESSORS (URL GENERATION)
      * =========================
      */
 
+    // Public URL for request image
+    public function getImageUrlAttribute()
+    {
+        return $this->image
+            ? asset('storage/' . $this->image)
+            : null;
+    }
+
+    // Public URL for request document
+    public function getDocumentUrlAttribute()
+    {
+        return $this->document
+            ? asset('storage/' . $this->document)
+            : null;
+    }
+
+    /**
+     * =========================
+     * UI HELPER ATTRIBUTES
+     * =========================
+     */
     public function getStatusBadgeAttribute()
     {
         return match ($this->status) {
