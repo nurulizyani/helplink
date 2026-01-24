@@ -40,7 +40,6 @@ class AdminRequestController extends Controller
     {
         $request = HelpRequest::with([
             'user',
-            'images',
             'claimRequests',
         ])->findOrFail($id);
 
