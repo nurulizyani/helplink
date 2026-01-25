@@ -9,6 +9,7 @@ use App\Services\NotificationService;
 use App\Models\Notification;
 use App\Services\AiRequestAnalyzer;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class AdminRequestController extends Controller
 {
@@ -38,6 +39,8 @@ class AdminRequestController extends Controller
      */
     public function show($id)
     {
+        Log::info('ADMIN REQUEST SHOW TRIGGERED', ['id' => $id]);
+
         $request = HelpRequest::with([
             'user',
             'claimRequests',
