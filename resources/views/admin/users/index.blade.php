@@ -267,7 +267,9 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-light" data-bs-dismiss="modal">
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
                         Cancel
                     </button>
                     <button class="btn btn-danger">
