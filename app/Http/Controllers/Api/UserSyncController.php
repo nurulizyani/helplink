@@ -15,69 +15,88 @@ class UserSyncController extends Controller
      * Sync user from mobile (after Firebase login)
      */
     public function syncUser(Request $request)
-    {
-        try {
-            $request->validate([
-                'firebase_uid'   => 'required|string',
-                'name'           => 'nullable|string',
-                'email'          => 'required|email',
-                'phone'          => 'nullable|string',
-                'address'        => 'nullable|string',
-                'email_verified' => 'nullable|boolean',
+{
+    try {
+        $request->validate([
+            'firebase_uid'   => 'required|string',
+            'name'           => 'nullable|string',
+            'email'          => 'required|email',
+            'phone'          => 'nullable|string',
+            'address'        => 'nullable|string',
+            'email_verified' => 'nullable|boolean',
+        ]);
+
+        Log::info('[SYNC USER PAYLOAD]', $request->only([
+            'firebase_uid',
+            'email',
+            'email_verified'
+        ]));
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // CREATE ONLY ONCE
+            $user = User::create([
+                'firebase_uid' => $request->firebase_uid,
+                'name'         => $request->name ?? 'User',
+                'email'        => $request->email,
+                'phone_number' => $request->phone,
+                'address'      => $request->address,
+                'password'     => bcrypt('firebase_user'),
+                'email_verified_at' => $request->email_verified ? now() : null,
             ]);
+        } else {
+            // UPDATE ONLY IF DATA CHANGES
+            $dirty = false;
 
-            Log::info('[SYNC USER PAYLOAD]', [
-    'firebase_uid'   => $request->firebase_uid,
-    'email'          => $request->email,
-    'email_verified' => $request->email_verified,
-]);
-
-
-            $user = User::where('email', $request->email)->first();
-
-            if ($user) {
-                // ================= UPDATE EXISTING USER =================
-                $user->update([
-                    'firebase_uid' => $request->firebase_uid,
-                    'name'         => $request->name ?? $user->name,
-                    'phone_number' => $request->phone ?? $user->phone_number,
-                    'address'      => $request->address ?? $user->address,
-                ]);
-
-            } else {
-                // ================= CREATE NEW USER =================
-                $user = User::create([
-    'firebase_uid' => $request->firebase_uid,
-    'name'         => $request->name ?? 'User',
-    'email'        => $request->email,
-    'phone_number' => $request->phone,
-    'address'      => $request->address,
-    'password'     => bcrypt('firebase_user'),
-]);
+            if ($user->firebase_uid !== $request->firebase_uid) {
+                $user->firebase_uid = $request->firebase_uid;
+                $dirty = true;
             }
 
-            // ================= EMAIL VERIFIED SYNC =================
+            if ($request->name && $user->name !== $request->name) {
+                $user->name = $request->name;
+                $dirty = true;
+            }
+
+            if ($request->phone && $user->phone_number !== $request->phone) {
+                $user->phone_number = $request->phone;
+                $dirty = true;
+            }
+
+            if ($request->address && $user->address !== $request->address) {
+                $user->address = $request->address;
+                $dirty = true;
+            }
+
             if ($request->email_verified === true && !$user->email_verified_at) {
-                $user->update([
-                    'email_verified_at' => now(),
-                ]);
+                $user->email_verified_at = now();
+                $dirty = true;
             }
 
-            return response()->json([
-                'success'        => true,
-                'data'           => $user,
-                'email_verified' => (bool) $user->email_verified_at,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('[SYNC USER] ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to sync user',
-            ], 500);
+            if ($dirty) {
+                $user->save(); // SAVE ONCE ONLY
+            }
         }
+
+        return response()->json([
+            'success'        => true,
+            'data'           => $user,
+            'email_verified' => (bool) $user->email_verified_at,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('[SYNC USER ERROR]', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to sync user',
+        ], 500);
     }
+}
+
 
     /**
      * Get authenticated user profile
