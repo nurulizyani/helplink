@@ -26,6 +26,13 @@ class UserSyncController extends Controller
                 'email_verified' => 'nullable|boolean',
             ]);
 
+            Log::info('[SYNC USER PAYLOAD]', [
+    'firebase_uid'   => $request->firebase_uid,
+    'email'          => $request->email,
+    'email_verified' => $request->email_verified,
+]);
+
+
             $user = User::where('email', $request->email)->first();
 
             if ($user) {
