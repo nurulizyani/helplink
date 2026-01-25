@@ -61,11 +61,14 @@ class OfferController extends Controller
             'status'        => 'available',
         ]);
 
-        // 🔔 Notification MUST NOT break offer creation
+        // notify owner
+        NotificationService::offerCreated($user, $offer);
+
+        // notify public users
         try {
-            NotificationService::offerSubmitted($offer);
+            NotificationService::newOfferAvailable($offer);
         } catch (\Throwable $e) {
-            Log::error('Offer notification failed', [
+            Log::error('Public offer notification failed', [
                 'offer_id' => $offer->offer_id,
                 'error'    => $e->getMessage(),
             ]);
@@ -88,7 +91,6 @@ class OfferController extends Controller
         ], 500);
     }
 }
-
 
     /**
      * =========================

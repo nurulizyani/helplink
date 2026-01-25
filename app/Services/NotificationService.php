@@ -162,17 +162,6 @@ class NotificationService
         );
     }
 
-    public static function offerApproved(Offer $offer): void
-    {
-        self::notify(
-            $offer->user_id,
-            'Offer Approved',
-            "Your offer '{$offer->item_name}' has been approved.",
-            'offer',
-            ['offer_id' => $offer->id]
-        );
-    }
-
     public static function offerFlagged(Offer $offer): void
     {
         self::notify(
@@ -231,16 +220,27 @@ class NotificationService
         );
     }
 
-    public static function offerCompletedByAdmin(Offer $offer): void
-    {
+    /* =========================================================
+ | OFFER MODULE – PUBLIC NOTIFICATION
+ ========================================================= */
+public static function newOfferAvailable(Offer $offer): void
+{
+    // notify semua user kecuali owner
+    $users = User::where('id', '!=', $offer->user_id)->get();
+
+    foreach ($users as $user) {
         self::notify(
-            $offer->user_id,
-            'Offer Completed',
-            "Your offer '{$offer->item_name}' has been marked as completed by admin.",
+            $user->id,
+            'New Offer Available',
+            "A new offer '{$offer->item_name}' is now available.",
             'offer',
-            ['offer_id' => $offer->id]
+            [
+                'offer_id' => $offer->offer_id,
+            ]
         );
     }
+}
+
 
     /* =========================================================
      | CHAT MODULE
