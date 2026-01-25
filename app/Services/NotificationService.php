@@ -180,21 +180,21 @@ class NotificationService
         );
     }
 
-    public static function offerClaimed(Offer $offer, User $claimer): void
-    {
-        self::notify(
-            $offer->user_id,
-            'Offer Claimed',
-            "{$claimer->name} has claimed your offer '{$offer->item_name}'.",
-            'offer',
-            [
-                'offer_id'   => $offer->id,
-                'claimer_id' => $claimer->id,
-            ]
-        );
-    }
+   public static function offerClaimed(User $owner, User $claimer, Offer $offer): void
+{
+    self::notify(
+        $owner->id,
+        'Offer Claimed',
+        "{$claimer->name} has claimed your offer '{$offer->item_name}'.",
+        'offer',
+        [
+            'offer_id'   => $offer->offer_id,
+            'claimer_id' => $claimer->id,
+        ]
+    );
+}
 
-    public static function offerClaimCancelled(User $owner, Offer $offer): void
+    public static function offerCancelled(User $owner, Offer $offer): void
     {
         self::notify(
             $owner->id,
@@ -226,6 +226,28 @@ class NotificationService
             ['offer_id' => $offer->id]
         );
     }
+    public static function offerCompletedForClaimer(User $claimer, Offer $offer): void
+{
+    self::notify(
+        $claimer->id,
+        'Offer Completed',
+        "Your claim for '{$offer->item_name}' has been completed.",
+        'offer',
+        ['offer_id' => $offer->offer_id]
+    );
+}
+public static function offerCancelledForClaimer(User $claimer, Offer $offer): void
+{
+    self::notify(
+        $claimer->id,
+        'Offer Cancelled',
+        "The offer '{$offer->item_name}' has been cancelled by the owner.",
+        'offer',
+        ['offer_id' => $offer->offer_id]
+    );
+}
+
+
 
     /* =========================================================
  | OFFER MODULE – PUBLIC NOTIFICATION

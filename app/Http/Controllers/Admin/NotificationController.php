@@ -15,8 +15,12 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        // Admin can view all notifications (system log)
-        $notifications = Notification::orderByDesc('created_at')->get();
+        $notifications = Notification::whereIn('type', [
+                'system',
+                'request'
+            ])
+            ->orderByDesc('created_at')
+            ->get();
 
         return view('admin.notifications.index', compact('notifications'));
     }
@@ -42,7 +46,9 @@ class NotificationController extends Controller
      */
     public function readAll()
     {
-        Notification::where('is_read', 0)->update([
+        Notification::where('is_read', 0)
+        ->whereIn('type', ['system', 'request'])
+        ->update([
             'is_read' => 1,
         ]);
 
@@ -56,13 +62,16 @@ class NotificationController extends Controller
      */
     public function unread()
     {
-        $unread = Notification::where('is_read', 0)
+        $query = Notification::where('is_read', 0)
+            ->whereIn('type', ['system', 'request']);
+
+        $unread = $query
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
         return response()->json([
-            'count' => Notification::where('is_read', 0)->count(),
+            'count' => $query->count(),
             'notifications' => $unread->map(function ($n) {
                 return [
                     'id'      => $n->id,
@@ -74,4 +83,5 @@ class NotificationController extends Controller
             }),
         ]);
     }
+
 }

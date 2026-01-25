@@ -62,8 +62,8 @@ class ClaimOfferController extends Controller
 
             $offer->update(['status' => 'claimed']);
 
-            // ================= NOTIFICATION =================
-            NotificationService::offerClaimed($offer, $user);
+            $owner = $offer->user;
+            NotificationService::offerClaimed($owner, $user, $offer);
 
             return response()->json([
                 'success' => true,
@@ -102,9 +102,6 @@ class ClaimOfferController extends Controller
         ]);
     }
 
-    /**
-     * CANCEL CLAIM
-     */
     public function cancelClaim(Request $request)
     {
         $user = $request->user();
@@ -132,8 +129,11 @@ class ClaimOfferController extends Controller
         if ($offer) {
             $offer->update(['status' => 'available']);
 
-            // ================= NOTIFICATION =================
-            NotificationService::offerCancelled($offer);
+            $owner = $offer->user;
+            NotificationService::offerCancelled($owner, $offer);
+
+            $claimer = $claim->user;
+            NotificationService::offerCancelledForClaimer($claimer, $offer);
         }
 
         return response()->json([
@@ -170,8 +170,12 @@ class ClaimOfferController extends Controller
 
             $offer = Offer::where('offer_id', $claim->offer_id)->first();
             if ($offer) {
-                // ================= NOTIFICATION =================
-                NotificationService::offerReceived($offer);
+                $owner = $offer->user;
+                NotificationService::offerReceived($owner, $offer);
+
+                $claimer = $claim->user;
+                NotificationService::offerReceivedForClaimer($claimer, $offer);
+
             }
 
             return response()->json([
@@ -217,8 +221,9 @@ class ClaimOfferController extends Controller
             $claim->update(['status' => 'completed']);
             $offer->update(['status' => 'completed']);
 
-            // ================= NOTIFICATION =================
-            NotificationService::offerCompleted($offer, $claim->user);
+            $owner   = $offer->user;
+            $claimer = $claim->user;
+            NotificationService::offerCompleted($owner, $claimer, $offer);
 
             return response()->json([
                 'success' => true,

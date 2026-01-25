@@ -13,7 +13,7 @@
                 <i class="fas fa-bell me-2"></i> All Notifications
             </h2>
             <small class="text-muted">
-                System, offer, and request activities
+                System and request related activities
             </small>
         </div>
 
@@ -54,7 +54,15 @@
                             <td>{{ $notif->message }}</td>
 
                             <td>
-                                <span class="badge rounded-pill bg-info-subtle text-info px-3">
+                                @php
+                                    $typeClass = match($notif->type) {
+                                        'system'  => 'bg-secondary-subtle text-secondary',
+                                        'request' => 'bg-primary-subtle text-primary',
+                                        default   => 'bg-light text-dark',
+                                    };
+                                @endphp
+
+                                <span class="badge rounded-pill {{ $typeClass }} px-3">
                                     {{ ucfirst($notif->type) }}
                                 </span>
                             </td>

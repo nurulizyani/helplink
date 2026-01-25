@@ -322,8 +322,10 @@
     </div>
 
     <div class="topbar-right">
-        @yield('topbar-right')
-    </div>
+    @include('admin.partials.notification-bell')
+    @yield('topbar-right')
+</div>
+
 </header>
 
 <main class="main-content">
@@ -348,6 +350,62 @@ document.getElementById('sidebarToggle')
 </script>
 
 @yield('scripts')
+        <script>
+        function loadAdminNotifications() {
+            fetch('{{ route('admin.notifications.unread') }}')
+                .then(res => res.json())
+                .then(data => {
+
+                    const dot  = document.getElementById('adminNotifDot');
+                    const list = document.getElementById('adminNotifList');
+
+                    if (!dot || !list) return;
+
+                    // RED DOT
+                    if (data.count > 0) {
+                        dot.classList.remove('d-none');
+                    } else {
+                        dot.classList.add('d-none');
+                    }
+
+                    // LIST
+                    let html = `
+                        <li class="dropdown-header fw-semibold">
+                            Notifications (${data.count})
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    `;
+
+                    if (data.notifications.length === 0) {
+                        html += `
+                            <li class="text-center text-muted py-3 small">
+                                No new notifications
+                            </li>
+                        `;
+                    } else {
+                        data.notifications.forEach(n => {
+                            html += `
+                                <li class="px-3 py-2">
+                                    <div class="fw-semibold/compiler">${n.title}</div>
+                                    <div class="small text-muted">${n.message}</div>
+                                    <div class="small text-secondary">${n.time}</div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                            `;
+                        });
+                    }
+
+                    list.innerHTML = html;
+                })
+                .catch(err => console.error(err));
+        }
+
+        // INITIAL LOAD
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminNotifications();
+            setInterval(loadAdminNotifications, 15000); // 15s refresh
+        });
+        </script>
 
 </body>
 </html>

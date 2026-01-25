@@ -19,16 +19,12 @@ use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Admin\NotificationController;
 
-Route::get('/storage/{path}', function ($path) {
-    $fullPath = storage_path('app/public/' . $path);
+Route::get('/storage/{path}', function ($path) {$fullPath = storage_path('app/public/' . $path);
 
     if (!file_exists($fullPath)) {
         abort(404);
     }
-
-    return response()->file($fullPath);
-})->where('path', '.*');
-
+    return response()->file($fullPath);})->where('path', '.*');
 /*
 |--------------------------------------------------------------------------
 | DEFAULT REDIRECT
@@ -119,10 +115,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 | TELEGRAM & FIREBASE
 |--------------------------------------------------------------------------
 */
-use App\Http\Controllers\TelegramController;
 use Kreait\Firebase\Factory;
-
-Route::post('/telegram/webhook', [TelegramController::class, 'webhook']);
 
 Route::get('/firebase-test', function () {
     $factory = (new Factory)
