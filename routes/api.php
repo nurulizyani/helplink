@@ -80,7 +80,6 @@ Route::get('/offers/{id}', [OfferController::class, 'show'])->whereNumber('id');
 // ==================================================
 // 🔓 REQUESTS (PUBLIC)
 // ==================================================
-Route::get('/requests', [RequestController::class, 'index']);
 Route::get('/requests/{id}', [RequestController::class, 'show'])->whereNumber('id');
 
 // ==================================================
@@ -102,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/claim-offers/collected', [ClaimOfferController::class, 'markCollected']);
 
     // ================= REQUESTS =================
+    Route::get('/requests', [RequestController::class, 'index']);
     Route::post('/requests', [RequestController::class, 'store']);
     Route::get('/requests/my', [RequestController::class, 'myRequests']);
     Route::put('/requests/{id}', [RequestController::class, 'update'])->whereNumber('id');
@@ -120,8 +120,4 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('conversationId');
     Route::get('/chat/conversations', [ChatController::class, 'myConversations']);
 
-    // ================= ⭐ RATING =================
-    Route::post('/ratings', [RatingController::class, 'store']);
-    Route::get('/ratings/received', [RatingController::class, 'received']);
-    Route::get('/ratings/summary', [RatingController::class, 'summary']);
 });
