@@ -11,6 +11,11 @@ use App\Helpers\FCMHelper;
 
 class NotificationService
 {
+    private static function stringify(array $data): array
+    {
+        return collect($data)->map(fn ($v) => (string) $v)->toArray();
+    }
+
     /* =========================================================
      | CORE CREATOR (SINGLE SOURCE OF TRUTH)
      ========================================================= */
@@ -32,16 +37,18 @@ class NotificationService
 
     $user = User::find($userId);
 
-    // 🔥 PUSH TO MOBILE (FCM)
+    // PUSH TO MOBILE (FCM)
     if ($user && $user->fcm_token) {
+        $payload = self::stringify(array_merge($data ?? [], [
+            'notification_id' => $notification->id,
+            'type'            => $type ?? 'system',
+        ]));
+
         FCMHelper::sendPushNotification(
             $user->fcm_token,
             $title,
             $message ?? '',
-            array_merge($data ?? [], [
-                'notification_id' => $notification->id,
-                'type' => $type,
-            ])
+            $payload
         );
     }
 }
