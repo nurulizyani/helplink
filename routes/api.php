@@ -49,7 +49,10 @@ Route::post('/auth/firebase-login', [AuthController::class, 'firebaseLogin']);
 // USER SYNC (LOGIN / REGISTER)
 // ==================================================
 //Route::post('/sync-user', [UserSyncController::class, 'syncUser']);
-Route::post('/save-fcm-token', [UserSyncController::class, 'saveFcmToken']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/save-fcm-token', [UserSyncController::class, 'saveFcmToken']);
+});
+
 
 // ==================================================
 // 🔐 PROFILE (AUTH REQUIRED)
