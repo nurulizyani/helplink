@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Offer;
 use Illuminate\Support\Facades\Storage;
-use App\Services\NotificationService;
 
 class OfferController extends Controller
 {
     /**
      * =========================
-     * INDEX - LIST ALL OFFERS
+     * LIST ALL OFFERS
      * =========================
      */
     public function index()
@@ -26,7 +25,7 @@ class OfferController extends Controller
 
     /**
      * =========================
-     * SHOW - OFFER DETAILS
+     * SHOW OFFER DETAILS
      * =========================
      */
     public function show($id)
@@ -39,7 +38,7 @@ class OfferController extends Controller
 
     /**
      * =========================
-     * EDIT OFFER
+     * EDIT OFFER (ADMIN)
      * =========================
      */
     public function edit($id)
@@ -50,7 +49,7 @@ class OfferController extends Controller
 
     /**
      * =========================
-     * UPDATE OFFER
+     * UPDATE OFFER (ADMIN)
      * =========================
      */
     public function update(Request $request, $id)
@@ -62,9 +61,7 @@ class OfferController extends Controller
             'status'      => 'required|in:available,claimed,completed,flagged',
         ]);
 
-        $offer = Offer::with('user')->findOrFail($id);
-
-        $oldStatus = $offer->status;
+        $offer = Offer::findOrFail($id);
 
         $offer->update([
             'item_name'   => $request->item_name,
@@ -73,24 +70,49 @@ class OfferController extends Controller
             'status'      => $request->status,
         ]);
 
-        // ================= NOTIFICATION =================
-        if ($oldStatus !== $offer->status) {
-            if ($offer->status === 'available') {
-                NotificationService::offerApproved($offer);
-            }
-
-            if ($offer->status === 'completed') {
-                NotificationService::offerCompletedByAdmin($offer);
-            }
-
-            if ($offer->status === 'flagged') {
-                NotificationService::offerFlagged($offer);
-            }
-        }
-
         return redirect()
             ->route('admin.offers.index')
             ->with('success', 'Offer updated successfully.');
+    }
+
+    /**
+     * =========================
+     * FLAG OFFER (ADMIN REVIEW)
+     * =========================
+     */
+    public function flag($id)
+    {
+        $offer = Offer::findOrFail($id);
+
+        if ($offer->status !== 'available') {
+            return back()->with('error', 'Only available offers can be flagged.');
+        }
+
+        $offer->update([
+            'status' => 'flagged'
+        ]);
+
+        return back()->with('success', 'Offer flagged for admin review.');
+    }
+
+    /**
+     * =========================
+     * UNFLAG OFFER
+     * =========================
+     */
+    public function unflag($id)
+    {
+        $offer = Offer::findOrFail($id);
+
+        if ($offer->status !== 'flagged') {
+            return back()->with('error', 'Offer is not flagged.');
+        }
+
+        $offer->update([
+            'status' => 'available'
+        ]);
+
+        return back()->with('success', 'Offer restored successfully.');
     }
 
     /**
@@ -102,11 +124,9 @@ class OfferController extends Controller
     {
         $offer = Offer::findOrFail($id);
 
-        // Delete image properly
         if ($offer->image) {
-            $path = str_replace('storage/', '', $offer->image);
-            if (Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if (Storage::disk('public')->exists($offer->image)) {
+                Storage::disk('public')->delete($offer->image);
             }
         }
 
@@ -119,20 +139,18 @@ class OfferController extends Controller
 
     /**
      * =========================
-     * EXPORT CSV (FULL DATA)
+     * EXPORT OFFERS CSV
      * =========================
      */
     public function export()
     {
-        $offers = Offer::with('user')
-            ->latest()
-            ->get();
+        $offers = Offer::with('user')->latest()->get();
 
         $filename = 'offers_' . now()->format('Ymd_His') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Content-Disposition' => "attachment; filename={$filename}",
         ];
 
         $callback = function () use ($offers) {
@@ -141,15 +159,11 @@ class OfferController extends Controller
             fputcsv($file, [
                 'Offer ID',
                 'Item Name',
-                'Description',
                 'Category',
                 'Quantity',
                 'Status',
                 'Owner Name',
                 'Owner Email',
-                'Address',
-                'Delivery Type',
-                'Image Path',
                 'Created At',
             ]);
 
@@ -157,16 +171,12 @@ class OfferController extends Controller
                 fputcsv($file, [
                     $offer->offer_id,
                     $offer->item_name,
-                    $offer->description,
                     $offer->category,
                     $offer->quantity,
                     ucfirst($offer->status),
                     $offer->user->name ?? '-',
                     $offer->user->email ?? '-',
-                    $offer->address,
-                    ucfirst($offer->delivery_type),
-                    $offer->image,
-                    optional($offer->created_at)->format('Y-m-d H:i:s'),
+                    $offer->created_at,
                 ]);
             }
 
@@ -174,41 +184,5 @@ class OfferController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * =========================
-     * FLAG OFFER
-     * =========================
-     */
-    public function flag($id)
-    {
-        $offer = Offer::with('user')->findOrFail($id);
-
-        $offer->update([
-            'status' => 'flagged'
-        ]);
-
-        NotificationService::offerFlagged($offer);
-
-        return back()->with('success', 'Offer has been flagged for review.');
-    }
-
-    /**
-     * =========================
-     * UNFLAG OFFER
-     * =========================
-     */
-    public function unflag($id)
-    {
-        $offer = Offer::with('user')->findOrFail($id);
-
-        $offer->update([
-            'status' => 'available'
-        ]);
-
-        NotificationService::offerApproved($offer);
-
-        return back()->with('success', 'Offer has been restored.');
     }
 }

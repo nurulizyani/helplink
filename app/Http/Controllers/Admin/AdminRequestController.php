@@ -54,10 +54,20 @@ class AdminRequestController extends Controller
     public function updateStatus(HttpRequest $request, $id)
 {
     $req = HelpRequest::with('user')->findOrFail($id);
-
     $request->validate([
-        'status'       => 'required|in:approved,rejected,fulfilled',
-        'admin_remark' => 'nullable|string|max:1000',
+        'status' => 'required|in:approved,rejected,fulfilled',
+
+        // admin_remark WAJIB kalau rejected
+        'admin_remark' => [
+            'nullable',
+            'string',
+            'max:1000',
+            function ($attribute, $value, $fail) use ($request) {
+                if ($request->status === 'rejected' && empty($value)) {
+                    $fail('Admin remark is required when rejecting a request.');
+                }
+            },
+        ],
     ]);
 
     $status = strtolower($request->status);

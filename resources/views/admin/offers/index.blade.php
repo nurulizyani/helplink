@@ -155,19 +155,25 @@
                                     {{-- FLAG / UNFLAG --}}
                                     @if($offer->status !== 'flagged')
                                         <form method="POST"
-                                              action="{{ route('admin.offers.flag', $offer->offer_id) }}">
+                                            action="{{ route('admin.offers.flag', $offer->offer_id) }}">
                                             @csrf
                                             @method('PUT')
-                                            <button class="btn btn-sm btn-outline-warning rounded-pill px-3">
+
+                                            <button class="btn btn-sm btn-outline-warning rounded-pill px-3"
+                                                    data-bs-toggle="tooltip"
+                                                    title="Flag this offer for admin review">
                                                 Flag
                                             </button>
                                         </form>
                                     @else
                                         <form method="POST"
-                                              action="{{ route('admin.offers.unflag', $offer->offer_id) }}">
+                                            action="{{ route('admin.offers.unflag', $offer->offer_id) }}">
                                             @csrf
                                             @method('PUT')
-                                            <button class="btn btn-sm btn-outline-success rounded-pill px-3">
+
+                                            <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                                                    data-bs-toggle="tooltip"
+                                                    title="Restore this offer back to available status">
                                                 Unflag
                                             </button>
                                         </form>
@@ -263,5 +269,11 @@ document.getElementById('deleteOfferModal')
         `/admin/offers/${button.getAttribute('data-offer-id')}`;
 });
 </script>
+<script>
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+});
+</script>
+
 @endsection
 
