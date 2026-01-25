@@ -32,20 +32,22 @@ class UserSyncController extends Controller
                 // ================= UPDATE EXISTING USER =================
                 $user->update([
                     'firebase_uid' => $request->firebase_uid,
-                    'name'         => $request->name,
-                    'phone_number' => $request->phone,
-                    'address'      => $request->address,
+                    'name'         => $request->name ?? $user->name,
+                    'phone_number' => $request->phone ?? $user->phone_number,
+                    'address'      => $request->address ?? $user->address,
                 ]);
+
             } else {
                 // ================= CREATE NEW USER =================
                 $user = User::create([
-                    'firebase_uid' => $request->firebase_uid,
-                    'name'         => $request->name,
-                    'email'        => $request->email,
-                    'phone_number' => $request->phone,
-                    'address'      => $request->address,
-                    'password'     => bcrypt('firebase_user'),
-                ]);
+    'firebase_uid' => $request->firebase_uid,
+    'name'         => $request->name ?? 'User',
+    'email'        => $request->email,
+    'phone_number' => $request->phone,
+    'address'      => $request->address,
+    'password'     => bcrypt('firebase_user'),
+]);
+
 
                 // ================= NOTIFICATION =================
                 NotificationService::accountCreated($user);
