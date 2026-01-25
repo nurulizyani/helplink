@@ -42,7 +42,7 @@ Route::get('/', function () {return redirect()->route('admin.login');});
 |--------------------------------------------------------------------------
 */
 Route::get('/admin/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminController::class, 'login']);
+Route::post('/admin/login', [AdminController::class, 'admin.login']);
 Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
 
 /*
