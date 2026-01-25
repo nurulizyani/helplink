@@ -134,42 +134,52 @@ class RequestController extends Controller
      * =========================
      */
     public function index(Request $request)
-    {
-        $userLat = $request->latitude;
-        $userLng = $request->longitude;
-        $radius  = $request->radius ?? 0;
+{
+    $user = auth()->user();
 
-        $requests = RequestModel::with('user')
-            ->where('status', 'approved')
-            ->get();
+    $userLat = $request->latitude;
+    $userLng = $request->longitude;
+    $radius  = $request->radius ?? 0;
 
-        $requests = $requests->map(function ($req) use ($userLat, $userLng) {
-            if (!$req->latitude || !$req->longitude || !$userLat || !$userLng) {
-                $req->distance = null;
-                return $req;
-            }
+    $query = RequestModel::with('user')
+        ->where('status', 'approved');
 
-            $req->distance = $this->calculateDistance(
-                $userLat,
-                $userLng,
-                $req->latitude,
-                $req->longitude
-            );
+    // 🔒 EXCLUDE OWN REQUESTS
+    if ($user) {
+        $query->where('user_id', '!=', $user->id);
+    }
 
+    $requests = $query->get();
+
+    // ================= DISTANCE CALC =================
+    $requests = $requests->map(function ($req) use ($userLat, $userLng) {
+        if (!$req->latitude || !$req->longitude || !$userLat || !$userLng) {
+            $req->distance = null;
             return $req;
-        });
-
-        if ($radius > 0) {
-            $requests = $requests->filter(function ($req) use ($radius) {
-                return $req->distance === null || $req->distance <= $radius;
-            });
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $requests->values()
-        ]);
+        $req->distance = $this->calculateDistance(
+            $userLat,
+            $userLng,
+            $req->latitude,
+            $req->longitude
+        );
+
+        return $req;
+    });
+
+    // ================= RADIUS FILTER =================
+    if ($radius > 0) {
+        $requests = $requests->filter(function ($req) use ($radius) {
+            return $req->distance === null || $req->distance <= $radius;
+        });
     }
+
+    return response()->json([
+        'success' => true,
+        'data' => $requests->values()
+    ]);
+}
 
     /**
      * =========================
