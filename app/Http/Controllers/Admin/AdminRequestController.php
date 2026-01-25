@@ -7,7 +7,8 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Models\Request as HelpRequest;
 use App\Services\NotificationService;
 use App\Models\Notification;
-
+use App\Services\AiRequestAnalyzer;
+use Illuminate\Support\Facades\Storage;
 
 class AdminRequestController extends Controller
 {
@@ -21,11 +22,10 @@ class AdminRequestController extends Controller
         $query = HelpRequest::with('user')
             ->orderByDesc('created_at');
 
-        // 🔍 FILTER BY STATUS
+        //FILTER BY STATUS
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
-
         $requests = $query->get();
 
         return view('admin.requests.index', compact('requests'));
@@ -42,6 +42,33 @@ class AdminRequestController extends Controller
             'user',
             'claimRequests',
         ])->findOrFail($id);
+
+        // =========================
+        // AI ANALYSIS TRIGGER
+        // =========================
+        if (
+            $request->supporting_document &&
+            !$request->ai_summary
+        ) {
+            $path = storage_path('app/' . $request->supporting_document);
+
+            $result = AiRequestAnalyzer::analyzeDocument($path, [
+                'category' => $request->category,
+                'item'     => $request->item_name,
+            ]);
+
+            if (!empty($result)) {
+                $request->update([
+                    'document_type' => $result['document_type'] ?? 'Unknown',
+                    'document_date' => $result['document_date'] ?? null,
+                    'ai_summary'    => $result['summary'] ?? null,
+                    'ai_confidence' => $result['confidence'] ?? 0,
+                    'ai_metadata'   => $result['extracted_data'] ?? null,
+                ]);
+            }
+        }
+
+        $request->refresh();
 
         return view('admin.requests.show', compact('request'));
     }
@@ -91,7 +118,6 @@ class AdminRequestController extends Controller
         ->with('success', 'Request status updated successfully.');
 }
 
-
     /**
      * =========================
      * EXPORT REQUESTS (CSV)
@@ -140,7 +166,6 @@ class AdminRequestController extends Controller
 
             fclose($handle);
         };
-
         return response()->stream($callback, 200, $headers);
     }
 }
