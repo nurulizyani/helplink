@@ -21,6 +21,7 @@ class AuthController extends Controller
 
     public function firebaseLogin(Request $request)
     {
+        \Log::info('🔥 firebaseLogin HIT 🔥');
         try {
             $request->validate([
                 'id_token' => 'required|string',
