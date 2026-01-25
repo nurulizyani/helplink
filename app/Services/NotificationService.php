@@ -268,12 +268,13 @@ public static function newOfferAvailable(Offer $offer): void
         self::notify(
             $receiverId,
             'New Message',
-            "New message from {$sender->name}",
+            $message->message,
             'chat',
             [
                 'conversation_id' => $conversation->id,
                 'sender_id'       => $sender->id,
             ]
         );
+
     }
 }

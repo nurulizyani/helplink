@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ClaimRequestController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,4 +121,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('conversationId');
     Route::get('/chat/conversations', [ChatController::class, 'myConversations']);
 
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });
