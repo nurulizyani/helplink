@@ -17,72 +17,78 @@ class OfferController extends Controller
      * =========================
      */
     public function store(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'item_name'     => 'required|string|max:255',
-                'description'   => 'required|string',
-                'quantity'      => 'nullable|integer|min:1',
-                'category'      => 'required|string',
-                'delivery_type' => 'required|string|in:pickup,delivery',
-                'address'       => 'nullable|string',
-                'latitude'      => 'nullable|numeric',
-                'longitude'     => 'nullable|numeric',
-                'image'         => 'nullable|file|mimes:jpg,jpeg,png|max:4096',
-            ]);
+{
+    try {
+        $validated = $request->validate([
+            'item_name'     => 'required|string|max:255',
+            'description'   => 'required|string',
+            'quantity'      => 'nullable|integer|min:1',
+            'category'      => 'required|string',
+            'delivery_type' => 'required|string|in:pickup,delivery',
+            'address'       => 'nullable|string',
+            'latitude'      => 'nullable|numeric',
+            'longitude'     => 'nullable|numeric',
+            'image'         => 'nullable|file|mimes:jpg,jpeg,png|max:4096',
+        ]);
 
-            $user = $request->user();
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated',
-                ], 401);
-            }
-
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('offers', $filename, 'public');
-                
-                $imagePath = 'offers/' . $filename;
-
-            }
-
-            $offer = Offer::create([
-                'user_id'       => $user->id,
-                'item_name'     => $validated['item_name'],
-                'description'   => $validated['description'],
-                'quantity'      => $validated['quantity'] ?? 1,
-                'category'      => $validated['category'],
-                'delivery_type' => $validated['delivery_type'],
-                'address'       => $validated['address'] ?? null,
-                'latitude'      => $validated['latitude'] ?? null,
-                'longitude'     => $validated['longitude'] ?? null,
-                'image'         => $imagePath,
-                'status'        => 'available',
-            ]);
-
-            // ================= NOTIFICATION =================
-            NotificationService::offerSubmitted($offer);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Offer created successfully',
-                'data'    => $offer,
-            ], 201);
-
-        } catch (\Throwable $e) {
-            Log::error('Offer store error', [
-                'error' => $e->getMessage(),
-            ]);
-
+        $user = $request->user();
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create offer',
-            ], 500);
+                'message' => 'Unauthenticated',
+            ], 401);
         }
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('offers', $filename, 'public');
+            $imagePath = 'offers/' . $filename;
+        }
+
+        $offer = Offer::create([
+            'user_id'       => $user->id,
+            'item_name'     => $validated['item_name'],
+            'description'   => $validated['description'],
+            'quantity'      => $validated['quantity'] ?? 1,
+            'category'      => $validated['category'],
+            'delivery_type' => $validated['delivery_type'],
+            'address'       => $validated['address'] ?? null,
+            'latitude'      => $validated['latitude'] ?? null,
+            'longitude'     => $validated['longitude'] ?? null,
+            'image'         => $imagePath,
+            'status'        => 'available',
+        ]);
+
+        // 🔔 Notification MUST NOT break offer creation
+        try {
+            NotificationService::offerSubmitted($offer);
+        } catch (\Throwable $e) {
+            Log::error('Offer notification failed', [
+                'offer_id' => $offer->offer_id,
+                'error'    => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Offer created successfully',
+            'data'    => $offer,
+        ], 201);
+
+    } catch (\Throwable $e) {
+        Log::error('Offer store error', [
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create offer',
+        ], 500);
     }
+}
+
 
     /**
      * =========================
