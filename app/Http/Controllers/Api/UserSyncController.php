@@ -47,10 +47,6 @@ class UserSyncController extends Controller
     'address'      => $request->address,
     'password'     => bcrypt('firebase_user'),
 ]);
-
-
-                // ================= NOTIFICATION =================
-                NotificationService::accountCreated($user);
             }
 
             // ================= EMAIL VERIFIED SYNC =================
