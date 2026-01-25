@@ -14,19 +14,21 @@ class FirestoreService
         $this->projectId = config('services.firebase.project_id');
     }
 
-    protected function getAccessToken(): string
-    {
-        $credentials = new ServiceAccountCredentials(
-            ['https://www.googleapis.com/auth/datastore'],
-            json_decode(
-                file_get_contents(base_path(env('FIREBASE_CREDENTIALS'))),
-                true
-            )
-        );
+   protected function getAccessToken(): string
+{
+    $credentials = new ServiceAccountCredentials(
+        ['https://www.googleapis.com/auth/datastore'],
+        json_decode(
+            file_get_contents(
+                storage_path('app/firebase/firebase-service-account.json')
+            ),
+            true
+        )
+    );
 
-        $token = $credentials->fetchAuthToken();
-        return $token['access_token'];
-    }
+    $token = $credentials->fetchAuthToken();
+    return $token['access_token'];
+}
 
     protected function formatValue($value): array
     {
