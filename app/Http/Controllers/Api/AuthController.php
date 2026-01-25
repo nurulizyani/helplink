@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Kreait\Firebase\Contract\Auth as FirebaseAuth;
-use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -65,31 +64,10 @@ class AuthController extends Controller
             }
 
             // =========================
-            // 3. CREATE / SYNC FIRESTORE
+            // 3. NO FIRESTORE HERE
             // =========================
-            try {
-                $factory = (new Factory)
-                    ->withServiceAccount(storage_path('app/firebase/firebase-service-account.json'));
-                $firestore = $factory->createFirestore();
-                $db = $firestore->database();
-
-                $db->collection('users')
-                    ->document($firebaseUid)
-                    ->set([
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone_number,
-                        'address' => $user->address,
-                        'created_at' => $user->created_at?->toDateTimeString(),
-                        'updated_at' => now()->toDateTimeString(),
-                    ], ['merge' => true]);
-
-            } catch (\Throwable $e) {
-                Log::error('Firestore user sync failed', [
-                    'uid' => $firebaseUid,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            // Firestore MUST NOT be touched during login
+            // Firestore is NOT the source of truth for user profile
 
             // =========================
             // 4. Create Sanctum token
