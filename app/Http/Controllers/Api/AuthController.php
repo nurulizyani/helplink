@@ -65,6 +65,15 @@ class AuthController extends Controller
             }
 
             // =========================
+// 3. AUTO SET EMAIL VERIFIED
+// =========================
+if ($claims->get('email_verified') && !$user->email_verified_at) {
+    $user->email_verified_at = now();
+    $user->save();
+}
+
+
+            // =========================
             // 3. NO FIRESTORE HERE
             // =========================
             // Firestore MUST NOT be touched during login
