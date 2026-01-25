@@ -113,47 +113,49 @@ class UserSyncController extends Controller
      * Update profile (mobile)
      */
     public function updateProfile(Request $request)
-    {
-        try {
-            $user = $request->user();
+{
+    try {
+        $user = $request->user();
 
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated',
-                ], 401);
-            }
-
-            $request->validate([
-                'name'    => 'required|string|max:255',
-                'phone'   => 'nullable|string|max:20',
-                'address' => 'nullable|string|max:255',
-            ]);
-
-            $user->update([
-                'name'         => $request->name,
-                'phone_number' => $request->phone,
-                'address'      => $request->address,
-            ]);
-
-            // ================= NOTIFICATION =================
-            NotificationService::profileUpdated($user);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data'    => $user,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('[UPDATE PROFILE] ' . $e->getMessage());
-
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update profile',
-            ], 500);
+                'message' => 'Unauthenticated',
+            ], 401);
         }
+
+        $validated = $request->validate([
+            'phone'     => 'nullable|string|max:20',
+            'address'   => 'nullable|string|max:255',
+        ]);
+
+        if (isset($validated['phone'])) {
+            $user->phone_number = $validated['phone'];
+        }
+
+        if (isset($validated['address'])) {
+            $user->address = $validated['address'];
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('[UPDATE PROFILE ERROR]', [
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update profile',
+        ], 500);
     }
+}
 
     /**
      * Delete user account
