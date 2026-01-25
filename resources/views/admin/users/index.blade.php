@@ -240,6 +240,48 @@
     </div>
 </div>
 
+{{-- ================= DELETE MODAL ================= --}}
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+
+            <form method="POST" id="deleteUserForm">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-header">
+                    <h5 class="fw-bold text-danger">
+                        <i class="fas fa-trash me-2"></i>Delete User
+                    </h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="mb-0">
+                        Are you sure you want to delete
+                        <strong id="deleteUserName"></strong>?
+                    </p>
+                    <small class="text-muted">
+                        This action cannot be undone.
+                    </small>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-light" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger">
+                        Yes, Delete
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
 @endsection
 
 @section('scripts')
@@ -284,6 +326,17 @@ document.getElementById('editUserModal')
 
     document.getElementById('editUserForm').action =
         `/admin/users/${b.dataset.id}`;
+});
+
+document.getElementById('deleteUserModal')
+.addEventListener('show.bs.modal', e => {
+    const b = e.relatedTarget;
+
+    document.getElementById('deleteUserName').innerText =
+        b.dataset.userName;
+
+    document.getElementById('deleteUserForm').action =
+        `/admin/users/${b.dataset.userId}`;
 });
 </script>
 @endsection
