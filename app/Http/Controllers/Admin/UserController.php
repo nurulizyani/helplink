@@ -38,81 +38,84 @@ class UserController extends Controller
      * EDIT USER
      * ===============================
      */
-    public function edit($id)
-    {
-        $user = User::findOrFail($id);
-        return view('admin.users.edit', compact('user'));
-    }
-
-    /**
-     * ===============================
-     * UPDATE USER (SQL + FIRESTORE)
-     * ===============================
-     */
     public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
+{
+    $user = User::findOrFail($id);
 
-        // ---------- VALIDATION ----------
-        $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email,' . $id,
-            'phone_number'  => 'nullable|string|max:20',
-            'address'       => 'nullable|string|max:255',
-        ]);
+    // ---------- VALIDATION ----------
+    $request->validate([
+        'name'          => 'required|string|max:255',
+        'email'         => 'required|email|unique:users,email,' . $id,
+        'phone_number'  => 'nullable|string|max:20',
+        'address'       => 'nullable|string|max:255',
+    ]);
 
-        Log::info('ADMIN USER UPDATE', [
-            'user_id'      => $user->id,
-            'firebase_uid' => $user->firebase_uid,
-        ]);
+    Log::info('ADMIN USER UPDATE ATTEMPT', [
+        'user_id'      => $user->id,
+        'firebase_uid' => $user->firebase_uid,
+    ]);
 
-        // ===============================
-        // 1. UPDATE SQL (MySQL)
-        // ===============================
-        $user->update([
-            'name'         => $request->name,
-            'email'        => $request->email,
-            'phone_number' => $request->phone_number,
-            'address'      => $request->address,
-        ]);
+    // ===============================
+    // 1. FILL DATA (NO SAVE YET)
+    // ===============================
+    $user->fill([
+        'name'         => $request->name,
+        'email'        => $request->email,
+        'phone_number' => $request->phone_number,
+        'address'      => $request->address,
+    ]);
 
-        // ===============================
-        // 2. SYNC TO FIRESTORE (REST)
-        // ===============================
-        if ($user->firebase_uid) {
-            try {
-                app(FirestoreService::class)->updateUser(
-                    $user->firebase_uid,
-                    [
-                        'name'       => $user->name,
-                        'email'      => $user->email,
-                        'phone'      => $user->phone_number,
-                        'address'    => $user->address,
-                        'updated_at' => now(),
-                    ]
-                );
-
-                Log::info('FIRESTORE SYNC SUCCESS', [
-                    'firebase_uid' => $user->firebase_uid,
-                ]);
-
-            } catch (\Throwable $e) {
-                Log::error('FIRESTORE SYNC FAILED', [
-                    'firebase_uid' => $user->firebase_uid,
-                    'error'        => $e->getMessage(),
-                ]);
-            }
-        }
-
-        // ===============================
-        // 3. NOTIFY USER
-        // ===============================
-        NotificationService::adminUpdatedProfile($user);
-
+    // ===============================
+    // 2. CHECK IF ANY CHANGE
+    // ===============================
+    if (!$user->isDirty()) {
         return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->route('admin.users.edit', $user->id)
+            ->with('warning', 'No changes detected.');
     }
+
+    // ===============================
+    // 3. SAVE SQL
+    // ===============================
+    $user->save();
+
+    // ===============================
+    // 4. SYNC TO FIRESTORE (ONLY IF CHANGED)
+    // ===============================
+    if ($user->firebase_uid) {
+        try {
+            app(FirestoreService::class)->updateUser(
+                $user->firebase_uid,
+                [
+                    'name'       => $user->name,
+                    'email'      => $user->email,
+                    'phone'      => $user->phone_number,
+                    'address'    => $user->address,
+                    'updated_at' => now(),
+                ]
+            );
+
+            Log::info('FIRESTORE SYNC SUCCESS', [
+                'firebase_uid' => $user->firebase_uid,
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('FIRESTORE SYNC FAILED', [
+                'firebase_uid' => $user->firebase_uid,
+                'error'        => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ===============================
+    // 5. NOTIFY USER (ONLY IF UPDATED)
+    // ===============================
+    NotificationService::adminUpdatedProfile($user);
+
+    return redirect()
+        ->route('admin.users.index')
+        ->with('success', 'User updated successfully.');
+}
 
     /**
      * ===============================
