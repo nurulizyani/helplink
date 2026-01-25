@@ -234,35 +234,51 @@
 
 <div class="modal fade" id="approveModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <form method="POST"
-          action="{{ route('admin.requests.updateStatus', $request->id) }}">
+    <div class="modal-content rounded-4 shadow border-0">
+
+      <form method="POST"
+            action="{{ route('admin.requests.updateStatus', $request->id) }}">
         @csrf
+        @method('PUT')
 
         <input type="hidden" name="status" value="approved">
 
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Approve Request</h5>
-            </div>
-
-            <div class="modal-body">
-                <p class="mb-0">
-                    Are you sure you want to approve this request?
-                </p>
-            </div>
-
-            <div class="modal-footer">
-                <button type="submit"
-                        class="btn btn-success rounded-pill px-4">
-                    Yes, Approve
-                </button>
-            </div>
+        <div class="modal-header">
+            <h5 class="modal-title text-success">
+                <i class="fas fa-check-circle me-2"></i> Approve Request
+            </h5>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"></button>
         </div>
-    </form>
+
+        <div class="modal-body">
+            <p class="mb-0">
+                Are you sure you want to approve this request?
+            </p>
+            <small class="text-muted">
+                This action will make the request visible and actionable.
+            </small>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-light"
+                    data-bs-dismiss="modal">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    class="btn btn-success rounded-pill px-4">
+                Yes, Approve
+            </button>
+        </div>
+
+      </form>
+
+    </div>
   </div>
 </div>
-
-
 
 <div class="modal fade" id="rejectModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
