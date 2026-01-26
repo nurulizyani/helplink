@@ -115,6 +115,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/claim-requests/store', [ClaimRequestController::class, 'store']);
     Route::get('/claim-requests/my', [ClaimRequestController::class, 'myClaims']);
     Route::post('/claim-requests/cancel', [ClaimRequestController::class, 'cancelClaim']);
+    Route::post('/claim-requests/complete', [ClaimRequestController::class, 'complete']);
     Route::post('/claim-requests/fulfill', [ClaimRequestController::class, 'markFulfilled']);
 
     // ================= 💬 CHAT =================

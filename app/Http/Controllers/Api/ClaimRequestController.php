@@ -202,4 +202,49 @@ class ClaimRequestController extends Controller
             ], 500);
         }
     }
+    public function complete(Request $request)
+{
+    try {
+        $request->validate([
+            'claim_id' => 'required|exists:claim_requests,id'
+        ]);
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        $claim = ClaimRequest::with('request.user')->findOrFail($request->claim_id);
+
+        if ((int) $claim->user_id !== (int) $user->id || $claim->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized or invalid state.'
+            ], 403);
+        }
+
+        $claim->update([
+            'status' => 'completed'
+        ]);
+
+        NotificationService::requestFulfilled($claim->request, $user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Help marked as completed.'
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('ClaimRequest complete error: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to complete help.'
+        ], 500);
+    }
+}
+
 }
