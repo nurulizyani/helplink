@@ -102,12 +102,21 @@ class UserSyncController extends Controller
      * Get authenticated user profile
      */
     public function profile(Request $request)
-    {
-        return response()->json([
-            'success' => true,
-            'data'    => $request->user(),
-        ]);
-    }
+{
+    $user = $request->user();
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'id'           => $user->id,
+            'name'         => $user->name,
+            'email'        => $user->email,
+            'address'      => $user->address,
+            'phone_number' => $user->phone_number,
+        ],
+    ]);
+}
+
 
     /**
      * Update profile (mobile)
