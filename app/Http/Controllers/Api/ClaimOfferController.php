@@ -23,10 +23,11 @@ class ClaimOfferController extends Controller
             }
 
             $request->validate([
-                'offer_id' => 'required|exists:offer_id',
-            ]);
+    'offer_id' => 'required|exists:offers,offer_id',
+]);
 
-            $offer = Offer::findOrFail($request->offer_id);
+
+            $offer = Offer::where('offer_id', $request->offer_id)->firstOrFail();
 
 
             if ((int) $offer->user_id === (int) $user->id) {
@@ -56,7 +57,7 @@ class ClaimOfferController extends Controller
             }
 
             $claim = ClaimOffer::create([
-                'offer_id' => $offer_id,
+                'offer_id' => $offer->offer_id,
                 'user_id'  => $user->id,
                 'status'   => 'active',
             ]);
@@ -92,10 +93,13 @@ class ClaimOfferController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
-        $claims = ClaimOffer::with('offer')
-            ->where('user_id', $user->id)
-            ->orderByDesc('id')
-            ->get();
+        $claims = ClaimOffer::with([
+        'offer.user' // ⬅️ INI WAJIB
+    ])
+    ->where('user_id', $user->id)
+    ->orderByDesc('id')
+    ->get();
+
 
         return response()->json([
             'success' => true,
@@ -123,7 +127,8 @@ class ClaimOfferController extends Controller
             ], 403);
         }
 
-        $offer = Offer::where('offer_id', $claim->offer_id)->first();
+       $offer = Offer::where('offer_id', $claim->offer_id)->first();
+
 
         $claim->update(['status' => 'cancelled']);
 

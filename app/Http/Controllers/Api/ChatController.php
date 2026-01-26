@@ -29,7 +29,8 @@ class ChatController extends Controller
             }
 
             $request->validate([
-                'offer_id'   => 'nullable|exists:offers,id',
+                'offer_id' => 'nullable|exists:offers,offer_id',
+
                 'request_id' => 'nullable|exists:requests,id',
             ]);
 
@@ -41,7 +42,8 @@ class ChatController extends Controller
             }
 
             if ($request->offer_id) {
-                $offer = Offer::findOrFail($request->offer_id);
+                $offer = Offer::where('offer_id', $request->offer_id)->firstOrFail();
+
                 $otherUserId = $offer->user_id;
             } else {
                 $req = HelpRequest::findOrFail($request->request_id);

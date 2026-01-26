@@ -188,7 +188,7 @@ class OfferController extends Controller
                 ], 401);
             }
 
-            $offer = Offer::findOrFail($id);
+            $offer = Offer::where('offer_id', $id)->firstOrFail();
 
             if ($offer->user_id !== $user->id) {
                 return response()->json([
@@ -264,7 +264,7 @@ class OfferController extends Controller
                 ], 401);
             }
 
-            $offer = Offer::findOrFail($id);
+           $offer = Offer::where('offer_id', $id)->firstOrFail();
 
             if ($offer->user_id !== $user->id) {
                 return response()->json([
