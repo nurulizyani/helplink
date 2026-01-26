@@ -29,7 +29,7 @@ class ChatController extends Controller
             }
 
             $request->validate([
-                'offer_id'   => 'nullable|integer',
+                'offer_id'   => 'nullable|exists:offers,id',
                 'request_id' => 'nullable|exists:requests,id',
             ]);
 

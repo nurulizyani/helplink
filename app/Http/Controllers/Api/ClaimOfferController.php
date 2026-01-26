@@ -23,10 +23,11 @@ class ClaimOfferController extends Controller
             }
 
             $request->validate([
-                'offer_id' => 'required|exists:offers,offer_id',
+                'offer_id' => 'required|exists:offer_id',
             ]);
 
-            $offer = Offer::where('offer_id', $request->offer_id)->firstOrFail();
+            $offer = Offer::findOrFail($request->offer_id);
+
 
             if ((int) $offer->user_id === (int) $user->id) {
                 return response()->json([
@@ -55,7 +56,7 @@ class ClaimOfferController extends Controller
             }
 
             $claim = ClaimOffer::create([
-                'offer_id' => $offer->offer_id,
+                'offer_id' => $offer_id,
                 'user_id'  => $user->id,
                 'status'   => 'active',
             ]);
