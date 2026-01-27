@@ -51,7 +51,7 @@
             gap: 10px;
             font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 32px;
+            margin-bottom: 16px;
             color: #fff;
         }
 
@@ -70,6 +70,10 @@
 
         .sidebar-menu {
             flex: 1;
+        }
+
+        .sidebar-brand a:hover {
+            color: #3b82f6; /* biru terang */
         }
 
         .sidebar-divider {
@@ -205,14 +209,12 @@
             color: inherit;
         }
         .page-count {
-    background: transparent;
-    color: #64748b; /* slate */
-    font-size: 0.9rem;
-    font-weight: 600;
-    padding: 0;
-}
-
-
+            background: transparent;
+            color: #64748b; /* slate */
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0;
+        }
 
     </style>
 </head>
@@ -224,9 +226,11 @@
 <!-- ================= SIDEBAR ================= -->
 <aside class="sidebar">
     <div class="sidebar-brand">
+    <a href="{{ route('admin.dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none text-white">
         <i class="fas fa-hand-holding-heart sidebar-brand-icon"></i>
         <span class="sidebar-brand-text">HelpLink Admin</span>
-    </div>
+    </a>
+</div>
 
     <div class="sidebar-divider"></div>
 
