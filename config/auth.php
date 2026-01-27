@@ -18,7 +18,7 @@ return [
         ],
 
         // ======================
-        // 🔥 API (FLUTTER + SANCTUM)
+        // API (FLUTTER + SANCTUM)
         // ======================
         'api' => [
             'driver' => 'sanctum',

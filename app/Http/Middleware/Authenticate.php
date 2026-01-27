@@ -9,7 +9,7 @@ class Authenticate extends Middleware
 {
     public function handle($request, Closure $next, ...$guards)
     {
-        // 🔥 BYPASS AUTH UNTUK STORAGE FILE
+        // BYPASS AUTH UNTUK STORAGE FILE
         if ($request->is('storage/*')) {
             return $next($request);
         }
@@ -23,9 +23,7 @@ class Authenticate extends Middleware
             abort(response()->json(['error' => 'Unauthorized'], 401));
         }
 
-        if ($request->is('admin') || $request->is('admin/*')) {
-            return route('admin.login');
-        }
+        //if ($request->is('admin') || $request->is('admin/*')) {return route('admin.login');}
 
         return route('admin.login');
     }
