@@ -98,15 +98,14 @@ function togglePassword() {
     const icon = document.getElementById('toggleIcon');
 
     if (pass.type === 'password') {
-        pass.type = 'text';
-        icon.classList.remove('fa-eye');       // Remove closed-eye
-        icon.classList.add('fa-eye-slash');    // Show open-eye
+        pass.type = 'text'; // Show password
+        icon.classList.replace('fa-eye', 'fa-eye'); // Mata terbuka
     } else {
-        pass.type = 'password';
-        icon.classList.remove('fa-eye-slash'); // Remove open-eye
-        icon.classList.add('fa-eye');          // Show closed-eye
+        pass.type = 'password'; // Hide password
+        icon.classList.replace('fa-eye', 'fa-eye'); // Mata tertutup
     }
 }
+
 
 function handleLogin() {
     const btn = document.getElementById('loginBtn');
