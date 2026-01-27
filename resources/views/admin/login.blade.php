@@ -112,7 +112,7 @@ function togglePassword() {
 function handleLogin() {
     const btn = document.getElementById('loginBtn');
     btn.disabled = true;
-    btn.innerHTML = 'Signing in...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Signing in...';
 }
 </script>
 @endsection
