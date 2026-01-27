@@ -72,7 +72,7 @@
                         required
                     >
                     <span class="input-group-text bg-white" style="cursor:pointer" onclick="togglePassword()">
-                        <i class="fas fa-eye" id="toggleIcon"></i>
+                        <i class="fas fa-eye-slash" id="toggleIcon"></i>
                     </span>
                 </div>
             </div>
@@ -98,15 +98,16 @@ function togglePassword() {
     const icon = document.getElementById('toggleIcon');
 
     if (pass.type === 'password') {
-        pass.type = 'text';
-        icon.classList.remove('fa-eye');       // Remove closed-eye
-        icon.classList.add('fa-eye-slash');    // Add open-eye
+        pass.type = 'text';               // show password
+        icon.classList.remove('fa-eye-slash'); 
+        icon.classList.add('fa-eye');     // mata terbuka
     } else {
-        pass.type = 'password';
-        icon.classList.remove('fa-eye-slash'); // Remove open-eye
-        icon.classList.add('fa-eye');          // Add closed-eye
+        pass.type = 'password';           // hide password
+        icon.classList.remove('fa-eye'); 
+        icon.classList.add('fa-eye-slash'); // mata tertutup
     }
 }
+
 
 function handleLogin() {
     const btn = document.getElementById('loginBtn');
