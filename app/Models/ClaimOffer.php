@@ -15,8 +15,6 @@ class ClaimOffer extends Model
         'offer_id',
         'user_id',
         'status',
-        'rating',
-        'comment',
     ];
 
     // 🔗 Claimer (User yang claim offer)

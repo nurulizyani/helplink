@@ -26,8 +26,6 @@ class Offer extends Model
     'delivery_type',
     'image',
     'status',
-    'rating',
-    'comment',
 ];
 
 

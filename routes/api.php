@@ -12,7 +12,6 @@ use App\Http\Controllers\Api\RequestController;
 use App\Http\Controllers\Api\ClaimOfferController;
 use App\Http\Controllers\Api\ClaimRequestController;
 use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\NotificationController;
 

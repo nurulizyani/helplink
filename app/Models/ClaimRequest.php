@@ -15,8 +15,6 @@ class ClaimRequest extends Model
         'request_id',
         'user_id',
         'status',
-        'rating',
-        'comment',
     ];
 
     // 🔗 Relationship: setiap claim_request dimiliki oleh 1 user

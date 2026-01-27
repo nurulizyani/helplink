@@ -132,6 +132,4 @@ Route::get('/firebase-test', function () {
     return 'Firebase connection successful';
 });
 
-Route::get('/_test', function () {
-    return 'OK';
-});
+Route::get('/_test', function () {return 'OK';});
