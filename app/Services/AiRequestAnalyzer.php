@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class AiRequestAnalyzer
 {
     /**
-     * Analyze supporting document using OpenAI Vision (NO OCR)
+     * Analyze supporting document using OpenAI Vision
      */
     public static function analyzeDocument(string $filePath, array $context = []): array
     {
