@@ -99,10 +99,12 @@ function togglePassword() {
 
     if (pass.type === 'password') {
         pass.type = 'text';
-        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        icon.classList.remove('fa-eye');       // Remove closed-eye
+        icon.classList.add('fa-eye-slash');    // Show open-eye
     } else {
         pass.type = 'password';
-        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        icon.classList.remove('fa-eye-slash'); // Remove open-eye
+        icon.classList.add('fa-eye');          // Show closed-eye
     }
 }
 
