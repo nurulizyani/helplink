@@ -55,7 +55,8 @@
                     <thead>
                         <tr>
                             <th class="text-center" style="width:80px">ID</th>
-                            <th>Name & Email</th>
+                            <th>Name</th>
+                            <th>Email</th>
                             <th class="text-center" style="width:100px">Status</th>
                             <th class="text-center" style="width:130px">Joined</th>
                             <th class="text-center" style="width:220px">Actions</th>
@@ -67,10 +68,8 @@
                         <tr class="user-row">
                             <td class="text-center text-muted fw-semibold">#{{ $user->id }}</td>
 
-                            <td>
-                                <div class="fw-semibold user-name">{{ $user->name }}</div>
-                                <div class="text-muted small user-email">{{ $user->email }}</div>
-                            </td>
+                            <td class="fw-semibold user-name">{{ $user->name }}</td>
+                            <td class="text-muted small user-email">{{ $user->email }}</td>
 
                             <td class="text-center">
                                 <span class="badge px-3 py-1
@@ -282,8 +281,6 @@
         </div>
     </div>
 </div>
-
-
 @endsection
 
 @section('scripts')
@@ -342,3 +339,16 @@ document.getElementById('deleteUserModal')
 });
 </script>
 @endsection
+
+<style>
+    .users-table tbody tr:hover {
+    background-color: #f8f9fa; /* soft light gray */
+    transition: background-color 0.2s;
+}
+
+.users-table .badge {
+    border-radius: 50px;          /* bulat penuh */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* subtle shadow */
+}
+
+</style>

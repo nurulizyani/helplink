@@ -244,7 +244,7 @@
         <a href="{{ route('admin.users.index') }}"
            class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
             <i class="fas fa-users"></i>
-            <span class="menu-text">Manage Users</span>
+            <span class="menu-text">Users</span>
         </a>
 
         <a href="{{ route('admin.offers.index') }}"
