@@ -57,11 +57,15 @@ class ClaimRequestController extends Controller
             ]);
 
             // ================= NOTIFICATION =================
-            NotificationService::requestClaimed($req->user, $req);
+            NotificationService::requestClaimed(
+                $req->user,   // request owner
+                $user,        // helper (current user)
+                $req          // request
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Help offer submitted successfully.',
+                'message' => 'Help request submitted successfully.',
                 'data'    => $claim
             ], 201);
 
@@ -70,7 +74,7 @@ class ClaimRequestController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to submit help offer.'
+                'message' => 'Failed to submit help request.'
             ], 500);
         }
     }
