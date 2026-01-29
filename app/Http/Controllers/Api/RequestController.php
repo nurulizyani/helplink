@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Services\AiRequestAnalyzer;
 use App\Services\NotificationService;
+use App\Models\ClaimRequest;
 
 class RequestController extends Controller
 {
@@ -144,9 +145,15 @@ class RequestController extends Controller
     $query = RequestModel::with('user')
         ->where('status', 'approved');
 
-    // 🔒 EXCLUDE OWN REQUESTS
+    // exclude own requests
     if ($user) {
-        $query->where('user_id', '!=', $user->id);
+        $query->where('user_id', '!=', $user->id)
+
+            // EXCLUDE REQUESTS ALREADY CLAIMED BY THIS USER
+            ->whereDoesntHave('claimRequests', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                ->where('status', 'active');
+            });
     }
 
     $requests = $query->get();
@@ -360,4 +367,8 @@ public function update(Request $request, $id)
         ], 500);
     }
 }
+    public function claims()
+    {
+        return $this->hasMany(ClaimRequest::class, 'request_id');
+    }
 }
