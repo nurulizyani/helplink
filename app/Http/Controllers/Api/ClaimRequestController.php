@@ -240,6 +240,10 @@ class ClaimRequestController extends Controller
             'status' => 'completed'
         ]);
 
+        $claim->request->update([
+            'status' => 'fulfilled'
+        ]);
+
         NotificationService::requestFulfilled($claim->request, $user);
 
         return response()->json([
