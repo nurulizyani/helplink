@@ -40,13 +40,12 @@ class ClaimRequestController extends Controller
 
             $existing = ClaimRequest::where('user_id', $user->id)
                 ->where('request_id', $req->id)
-                ->where('status', 'active')
                 ->first();
 
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You already offered to help this request.'
+                    'message' => 'You have already offered help for this request.'
                 ], 409);
             }
 
