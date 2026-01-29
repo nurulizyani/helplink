@@ -57,7 +57,7 @@ class ClaimRequestController extends Controller
             ]);
 
             // ================= NOTIFICATION =================
-            NotificationService::requestClaimed($req, $user);
+            NotificationService::requestClaimed($req->user, $req);
 
             return response()->json([
                 'success' => true,
