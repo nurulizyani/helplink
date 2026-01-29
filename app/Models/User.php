@@ -6,12 +6,12 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens; // ✅ TAMBAH NI
+use Laravel\Sanctum\HasApiTokens;
 use App\Models\Request;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable; // ✅ TAMBAH HasApiTokens
+    use HasApiTokens, HasFactory, Notifiable; 
 
     protected $fillable = [
         'firebase_uid',
@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'address',
         'phone_number',
         'fcm_token',
+        'profile_image',
     ];
 
     protected $hidden = [

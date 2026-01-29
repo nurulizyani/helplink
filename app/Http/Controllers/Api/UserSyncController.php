@@ -113,6 +113,7 @@ class UserSyncController extends Controller
             'email'        => $user->email,
             'address'      => $user->address,
             'phone_number' => $user->phone_number,
+            'profile_image' => $user->profile_image,
         ],
     ]);
 }
@@ -136,6 +137,7 @@ class UserSyncController extends Controller
         $validated = $request->validate([
             'phone'     => 'nullable|string|max:20',
             'address'   => 'nullable|string|max:255',
+            'profile_image' => 'nullable|url',
         ]);
 
         if (isset($validated['phone'])) {
@@ -144,6 +146,10 @@ class UserSyncController extends Controller
 
         if (isset($validated['address'])) {
             $user->address = $validated['address'];
+        }
+
+        if (isset($validated['profile_image'])) {
+            $user->profile_image = $validated['profile_image'];
         }
 
         $user->save();
