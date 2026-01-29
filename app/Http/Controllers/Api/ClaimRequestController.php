@@ -92,8 +92,15 @@ class ClaimRequestController extends Controller
                 ], 401);
             }
 
-            $claims = ClaimRequest::with(['request', 'request.user'])
-                ->where('user_id', $user->id)
+            $query = ClaimRequest::with(['request', 'request.user'])
+                ->where('user_id', $user->id);
+
+            // FILTER STATUS (jika ada)
+            if ($request->has('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            $claims = $query
                 ->orderByDesc('created_at')
                 ->get();
 
