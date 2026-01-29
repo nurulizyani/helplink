@@ -244,7 +244,11 @@ class ClaimRequestController extends Controller
             'status' => 'fulfilled'
         ]);
 
-        NotificationService::requestFulfilled($claim->request, $user);
+        NotificationService::requestFulfilled(
+            $claim->request->user, // request owner (User)
+            $user,                 // helper (User)
+            $claim->request        // request (HelpRequest)
+        );
 
         return response()->json([
             'success' => true,
