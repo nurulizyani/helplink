@@ -62,17 +62,17 @@ class OfferController extends Controller
         ]);
 
         // notify owner
-        NotificationService::offerCreated($user, $offer);
+        //NotificationService::offerCreated($user, $offer);
 
         // notify public users
-        try {
-            NotificationService::newOfferAvailable($offer);
-        } catch (\Throwable $e) {
-            Log::error('Public offer notification failed', [
-                'offer_id' => $offer->offer_id,
-                'error'    => $e->getMessage(),
-            ]);
-        }
+        //try {
+          //  NotificationService::newOfferAvailable($offer);
+        //} catch (\Throwable $e) {
+            //Log::error('Public offer notification failed', [
+             //   'offer_id' => $offer->offer_id,
+               // 'error'    => $e->getMessage(),
+          //  ]);
+        //}
 
         return response()->json([
             'success' => true,

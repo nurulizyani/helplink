@@ -8,59 +8,38 @@ use App\Models\ClaimRequest;
 use App\Models\Request as HelpRequest;
 use Illuminate\Support\Facades\Log;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 
 class ClaimRequestController extends Controller
 {
-    /**
-     * CREATE CLAIM (HELP REQUEST)
-     */
+
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
-            $request->validate([
-                'request_id' => 'required|exists:requests,id',
-            ]);
-
-            $user = $request->user();
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated.'
-                ], 401);
-            }
-
-            $req = HelpRequest::findOrFail($request->request_id);
-
-            if ((int) $req->user_id === (int) $user->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You cannot help your own request.'
-                ], 400);
-            }
-
-            $existing = ClaimRequest::where('user_id', $user->id)
-                ->where('request_id', $req->id)
-                ->first();
-
-            if ($existing) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You have already offered help for this request.'
-                ], 409);
-            }
-
+            ...
             $claim = ClaimRequest::create([
                 'user_id'    => $user->id,
                 'request_id' => $req->id,
                 'status'     => 'active',
             ]);
 
-            // ================= NOTIFICATION =================
-            NotificationService::requestClaimed(
-                $req->user,   // request owner
-                $user,        // helper (current user)
-                $req          // request
-            );
+            DB::commit();
+
+            // 🔔 notif SELAMAT (tak affect response)
+            try {
+                NotificationService::requestClaimed(
+                    $req->user,
+                    $user,
+                    $req
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Request claimed notification failed', [
+                    'claim_id' => $claim->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -68,7 +47,8 @@ class ClaimRequestController extends Controller
                 'data'    => $claim
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            DB::rollBack();
             Log::error('ClaimRequest store error: ' . $e->getMessage());
 
             return response()->json([
@@ -213,56 +193,44 @@ class ClaimRequestController extends Controller
         }
     }
     public function complete(Request $request)
-{
-    try {
-        $request->validate([
-            'claim_id' => 'required|exists:claim_requests,id'
-        ]);
+    {
+        DB::beginTransaction();
 
-        $user = $request->user();
-        if (!$user) {
+        try {
+            ...
+            $claim->update(['status' => 'completed']);
+            $claim->request->update(['status' => 'fulfilled']);
+
+            DB::commit();
+
+            // 🔔 notif SAFE
+            try {
+                NotificationService::requestFulfilled(
+                    $claim->request->user,
+                    $user,
+                    $claim->request
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Request fulfilled notification failed', [
+                    'claim_id' => $claim->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Help marked as completed.'
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('ClaimRequest complete error: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
+                'message' => 'Failed to complete help.'
+            ], 500);
         }
-
-        $claim = ClaimRequest::with('request.user')->findOrFail($request->claim_id);
-
-        if ((int) $claim->user_id !== (int) $user->id || $claim->status !== 'active') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized or invalid state.'
-            ], 403);
-        }
-
-        $claim->update([
-            'status' => 'completed'
-        ]);
-
-        $claim->request->update([
-            'status' => 'fulfilled'
-        ]);
-
-        NotificationService::requestFulfilled(
-            $claim->request->user, // request owner (User)
-            $user,                 // helper (User)
-            $claim->request        // request (HelpRequest)
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Help marked as completed.'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('ClaimRequest complete error: ' . $e->getMessage());
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to complete help.'
-        ], 500);
     }
-}
 
 }

@@ -17,262 +17,148 @@ class NotificationService
     }
 
     /* =========================================================
-     | CORE CREATOR (SINGLE SOURCE OF TRUTH)
+     | CORE NOTIFICATION (LOW LEVEL)
      ========================================================= */
     private static function notify(
-    int $userId,
-    string $title,
-    ?string $message = null,
-    ?string $type = null,
-    ?array $data = null
-): void {
-    $notification = Notification::create([
-        'user_id' => $userId,
-        'title'   => $title,
-        'message' => $message,
-        'type'    => $type,
-        'data'    => $data,
-        'is_read' => 0,
-    ]);
+        int $userId,
+        string $title,
+        ?string $message = null,
+        ?string $type = null,
+        ?array $data = null
+    ): void {
+        $notification = Notification::create([
+            'user_id' => $userId,
+            'title'   => $title,
+            'message' => $message,
+            'type'    => $type,
+            'data'    => $data,
+            'is_read' => 0,
+        ]);
 
-    $user = User::find($userId);
+        $user = User::find($userId);
 
-    // PUSH TO MOBILE (FCM)
-    if ($user && $user->fcm_token) {
-        $payload = self::stringify(array_merge($data ?? [], [
-            'notification_id' => $notification->id,
-            'type'            => $type ?? 'system',
-        ]));
+        // PUSH TO MOBILE (FCM)
+        if ($user && $user->fcm_token) {
+            $payload = self::stringify(array_merge($data ?? [], [
+                'notification_id' => $notification->id,
+                'type'            => $type ?? 'system',
+            ]));
 
-        FCMHelper::sendPushNotification(
-            $user->fcm_token,
-            $title,
-            $message ?? '',
-            $payload
-        );
+            FCMHelper::sendPushNotification(
+                $user->fcm_token,
+                $title,
+                $message ?? '',
+                $payload
+            );
+        }
     }
-}
 
     /* =========================================================
-     | SYSTEM / ACCOUNT
+     | SAFE SIMPLE NOTIFICATION (USE THIS EVERYWHERE)
+     ========================================================= */
+    public static function simple(
+        User $user,
+        string $title,
+        string $message,
+        string $type = 'system',
+        array $data = []
+    ): void {
+        self::notify(
+            $user->id,
+            $title,
+            $message,
+            $type,
+            $data
+        );
+    }
+
+    /* =========================================================
+     | SYSTEM
      ========================================================= */
     public static function accountCreated(User $user): void
     {
-        self::notify(
-            $user->id,
+        self::simple(
+            $user,
             'Welcome to HelpLink',
-            "Hi {$user->name}, your account has been successfully created.",
-            'system'
+            "Hi {$user->name}, your account has been successfully created."
         );
     }
 
     public static function profileUpdated(User $user): void
     {
-        self::notify(
-            $user->id,
+        self::simple(
+            $user,
             'Profile Updated',
-            "Hi {$user->name}, your profile information has been updated.",
-            'system'
-        );
-    }
-
-    public static function adminUpdatedProfile(User $user): void
-    {
-        self::notify(
-            $user->id,
-            'Profile Updated by Admin',
-            "Hi {$user->name}, your profile has been updated by the admin.",
-            'system'
+            "Hi {$user->name}, your profile information has been updated."
         );
     }
 
     /* =========================================================
-     | REQUEST MODULE
+     | REQUEST (SAFE VERSION)
      ========================================================= */
     public static function requestSubmitted(HelpRequest $request): void
     {
-        self::notify(
-            $request->user_id,
+        self::simple(
+            $request->user,
             'Request Submitted',
-            "Your request '{$request->item_name}' has been submitted and is pending review.",
+            "Your request '{$request->item_name}' has been submitted.",
             'request',
             ['request_id' => $request->id]
         );
     }
 
-    public static function requestApproved(HelpRequest $request): void
-    {
-        self::notify(
-            $request->user_id,
-            'Request Approved',
-            "Your request '{$request->item_name}' has been approved.",
-            'request',
-            ['request_id' => $request->id]
-        );
-    }
-
-    public static function requestRejected(HelpRequest $request): void
-    {
-        self::notify(
-            $request->user_id,
-            'Request Rejected',
-            "Your request '{$request->item_name}' has been rejected.",
-            'request',
-            ['request_id' => $request->id]
-        );
-    }
-
-    public static function requestClaimed(User $requestOwner, User $helper, HelpRequest $request): void
-    {
-        self::notify(
-            $requestOwner->id,
-            'Someone Offered Help',
-            "{$helper->name} has offered to help your request '{$request->item_name}'.",
-            'request',
-            ['request_id' => $request->id]
-        );
-    }
-
-    public static function requestFulfilled(User $requestOwner, User $helper, HelpRequest $request): void
-    {
-        self::notify(
-            $requestOwner->id,
-            'Request Fulfilled',
-            "Your request '{$request->item_name}' has been marked as fulfilled by {$helper->name}.",
-            'request',
-            ['request_id' => $request->id]
-        );
-    }
-
-    public static function claimCancelled(User $requestOwner, User $helper, HelpRequest $request): void
-    {
-        self::notify(
-            $requestOwner->id,
-            'Help Cancelled',
-            "{$helper->name} has cancelled their help for '{$request->item_name}'.",
+    public static function requestCompleted(
+        User $owner,
+        User $helper,
+        HelpRequest $request
+    ): void {
+        self::simple(
+            $owner,
+            'Request Completed',
+            "{$helper->name} has completed your request '{$request->item_name}'.",
             'request',
             ['request_id' => $request->id]
         );
     }
 
     /* =========================================================
-     | OFFER MODULE
+     | OFFER (SAFE VERSION)
      ========================================================= */
-    public static function offerCreated(User $owner, Offer $offer): void
+    public static function offerClaimed(User $owner, User $claimer, Offer $offer): void
     {
-        self::notify(
-            $owner->id,
-            'Offer Created',
-            "Your offer '{$offer->item_name}' has been created successfully.",
+        self::simple(
+            $owner,
+            'Offer Claimed',
+            "{$claimer->name} has claimed your offer '{$offer->item_name}'.",
             'offer',
-            ['offer_id' => $offer->id]
-        );
-    }
-
-    public static function offerFlagged(Offer $offer): void
-    {
-        self::notify(
-            $offer->user_id,
-            'Offer Flagged',
-            "Your offer '{$offer->item_name}' has been flagged for review by admin.",
-            'offer',
-            ['offer_id' => $offer->id]
-        );
-    }
-
-   public static function offerClaimed(User $owner, User $claimer, Offer $offer): void
-{
-    self::notify(
-        $owner->id,
-        'Offer Claimed',
-        "{$claimer->name} has claimed your offer '{$offer->item_name}'.",
-        'offer',
-        [
-            'offer_id'   => $offer->offer_id,
-            'claimer_id' => $claimer->id,
-        ]
-    );
-}
-
-    public static function offerCancelled(User $owner, Offer $offer): void
-    {
-        self::notify(
-            $owner->id,
-            'Claim Cancelled',
-            "A claim for your offer '{$offer->item_name}' has been cancelled.",
-            'offer',
-            ['offer_id' => $offer->id]
+            ['offer_id' => $offer->offer_id]
         );
     }
 
     public static function offerReceived(User $owner, Offer $offer): void
     {
-        self::notify(
-            $owner->id,
+        self::simple(
+            $owner,
             'Item Received',
             "The item '{$offer->item_name}' has been marked as received.",
             'offer',
-            ['offer_id' => $offer->id]
+            ['offer_id' => $offer->offer_id]
         );
     }
 
-    public static function offerCompleted(User $owner, User $claimer, Offer $offer): void
+    public static function offerCompleted(User $owner, Offer $offer): void
     {
-        self::notify(
-            $owner->id,
+        self::simple(
+            $owner,
             'Offer Completed',
-            "Your offer '{$offer->item_name}' has been successfully completed.",
+            "Your offer '{$offer->item_name}' has been completed.",
             'offer',
-            ['offer_id' => $offer->id]
+            ['offer_id' => $offer->offer_id]
         );
     }
-    public static function offerCompletedForClaimer(User $claimer, Offer $offer): void
-{
-    self::notify(
-        $claimer->id,
-        'Offer Completed',
-        "Your claim for '{$offer->item_name}' has been completed.",
-        'offer',
-        ['offer_id' => $offer->offer_id]
-    );
-}
-public static function offerCancelledForClaimer(User $claimer, Offer $offer): void
-{
-    self::notify(
-        $claimer->id,
-        'Offer Cancelled',
-        "The offer '{$offer->item_name}' has been cancelled by the owner.",
-        'offer',
-        ['offer_id' => $offer->offer_id]
-    );
-}
-
-
 
     /* =========================================================
- | OFFER MODULE – PUBLIC NOTIFICATION
- ========================================================= */
-public static function newOfferAvailable(Offer $offer): void
-{
-    // notify semua user kecuali owner
-    $users = User::where('id', '!=', $offer->user_id)->get();
-
-    foreach ($users as $user) {
-        self::notify(
-            $user->id,
-            'New Offer Available',
-            "A new offer '{$offer->item_name}' is now available.",
-            'offer',
-            [
-                'offer_id' => $offer->offer_id,
-            ]
-        );
-    }
-}
-
-
-    /* =========================================================
-     | CHAT MODULE
+     | CHAT
      ========================================================= */
     public static function newChatMessage(Message $message): void
     {
@@ -284,19 +170,31 @@ public static function newOfferAvailable(Offer $offer): void
 
         if (!$receiverId) return;
 
-        $sender = User::find($message->sender_id);
-        if (!$sender) return;
+        $receiver = User::find($receiverId);
+        if (!$receiver) return;
 
-        self::notify(
-            $receiverId,
+        self::simple(
+            $receiver,
             'New Message',
             $message->message,
             'chat',
             [
                 'conversation_id' => $conversation->id,
-                'sender_id'       => $sender->id,
+                'sender_id'       => $message->sender_id,
             ]
         );
+    }
 
+    public static function requestClaimCancelled(
+        HelpRequest $request,
+        User $helper
+    ): void {
+        self::simple(
+            $request->user,
+            'Help Cancelled',
+            "{$helper->name} cancelled help for '{$request->item_name}'.",
+            'request',
+            ['request_id' => $request->id]
+        );
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\ClaimOffer;
 use App\Models\Offer;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ClaimOfferController extends Controller
@@ -16,44 +17,34 @@ class ClaimOfferController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'offer_id' => 'required|exists:offers,offer_id',
+        ]);
+
+        DB::beginTransaction();
         try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
-            }
+            $offer = Offer::where('offer_id', $request->offer_id)->lockForUpdate()->firstOrFail();
 
-            $request->validate([
-    'offer_id' => 'required|exists:offers,offer_id',
-]);
-
-
-            $offer = Offer::where('offer_id', $request->offer_id)->firstOrFail();
-
-
-            if ((int) $offer->user_id === (int) $user->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You cannot claim your own offer.'
-                ], 403);
+            if ($offer->user_id === $user->id) {
+                return response()->json(['success' => false, 'message' => 'You cannot claim your own offer'], 403);
             }
 
             if ($offer->status !== 'available') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This offer is no longer available.'
-                ], 409);
+                return response()->json(['success' => false, 'message' => 'Offer is no longer available'], 409);
             }
 
             $exists = ClaimOffer::where('offer_id', $offer->offer_id)
                 ->where('user_id', $user->id)
                 ->whereIn('status', ['active', 'received', 'completed'])
-                ->first();
+                ->exists();
 
             if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You have already claimed this offer.'
-                ], 409);
+                return response()->json(['success' => false, 'message' => 'You already claimed this offer'], 409);
             }
 
             $claim = ClaimOffer::create([
@@ -64,21 +55,28 @@ class ClaimOfferController extends Controller
 
             $offer->update(['status' => 'claimed']);
 
-            $owner = $offer->user;
-            NotificationService::offerClaimed($owner, $user, $offer);
+            DB::commit();
+
+            // 🔔 Notification (SAFE)
+            try {
+                NotificationService::offerClaimed($offer->user, $user, $offer);
+            } catch (\Throwable $e) {
+                Log::warning('Offer claim notification failed', ['error' => $e->getMessage()]);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Offer claimed successfully.',
+                'message' => 'Offer claimed successfully',
                 'data'    => $claim,
             ], 201);
 
-        } catch (\Exception $e) {
-            Log::error('ClaimOffer store error: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('ClaimOffer store error', ['error' => $e->getMessage()]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to claim offer.'
+                'message' => 'Failed to claim offer',
             ], 500);
         }
     }
@@ -90,62 +88,56 @@ class ClaimOfferController extends Controller
     {
         $user = $request->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $claims = ClaimOffer::with([
-        'offer.user' // ⬅️ INI WAJIB
-    ])
-    ->where('user_id', $user->id)
-    ->orderByDesc('id')
-    ->get();
+        $claims = ClaimOffer::with('offer.user')
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->get();
 
-
-        return response()->json([
-            'success' => true,
-            'data'    => $claims
-        ]);
+        return response()->json(['success' => true, 'data' => $claims]);
     }
 
+    /**
+     * CANCEL CLAIM (CLAIMER)
+     */
     public function cancelClaim(Request $request)
     {
         $user = $request->user();
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
         $request->validate([
             'claim_id' => 'required|exists:claim_offers,id'
         ]);
 
-        $claim = ClaimOffer::findOrFail($request->claim_id);
+        DB::beginTransaction();
+        try {
+            $claim = ClaimOffer::lockForUpdate()->findOrFail($request->claim_id);
 
-        if ((int) $claim->user_id !== (int) $user->id || $claim->status !== 'active') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized or invalid state.'
-            ], 403);
+            if ($claim->user_id !== $user->id || $claim->status !== 'active') {
+                return response()->json(['success' => false, 'message' => 'Invalid state'], 403);
+            }
+
+            $offer = Offer::where('offer_id', $claim->offer_id)->lockForUpdate()->first();
+
+            $claim->update(['status' => 'cancelled']);
+            if ($offer) {
+                $offer->update(['status' => 'available']);
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Claim cancelled successfully']);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Cancel claim error', ['error' => $e->getMessage()]);
+
+            return response()->json(['success' => false, 'message' => 'Failed to cancel claim'], 500);
         }
-
-       $offer = Offer::where('offer_id', $claim->offer_id)->first();
-
-
-        $claim->update(['status' => 'cancelled']);
-
-        if ($offer) {
-            $offer->update(['status' => 'available']);
-
-            $owner = $offer->user;
-            NotificationService::offerCancelled($owner, $offer);
-
-            $claimer = $claim->user;
-            NotificationService::offerCancelledForClaimer($claimer, $offer);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Claim cancelled successfully.'
-        ]);
     }
 
     /**
@@ -153,49 +145,29 @@ class ClaimOfferController extends Controller
      */
     public function markReceived(Request $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'claim_id' => 'required|exists:claim_offers,id'
+        ]);
+
         try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
-            }
-
-            $request->validate([
-                'claim_id' => 'required|exists:claim_offers,id'
-            ]);
-
             $claim = ClaimOffer::findOrFail($request->claim_id);
 
-            if ((int) $claim->user_id !== (int) $user->id || $claim->status !== 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized or invalid state.'
-                ], 403);
+            if ($claim->user_id !== $user->id || $claim->status !== 'active') {
+                return response()->json(['success' => false, 'message' => 'Invalid state'], 403);
             }
 
             $claim->update(['status' => 'received']);
 
-            $offer = Offer::where('offer_id', $claim->offer_id)->first();
-            if ($offer) {
-                $owner = $offer->user;
-                NotificationService::offerReceived($owner, $offer);
+            return response()->json(['success' => true, 'message' => 'Item marked as received']);
 
-                $claimer = $claim->user;
-                NotificationService::offerReceivedForClaimer($claimer, $offer);
-
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Item marked as received.'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('ClaimOffer markReceived error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to confirm received.'
-            ], 500);
+        } catch (\Throwable $e) {
+            Log::error('Mark received error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed'], 500);
         }
     }
 
@@ -204,73 +176,42 @@ class ClaimOfferController extends Controller
      */
     public function markCollected(Request $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'claim_id' => 'required|exists:claim_offers,id'
+        ]);
+
+        DB::beginTransaction();
         try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
-            }
+            $claim = ClaimOffer::lockForUpdate()->findOrFail($request->claim_id);
+            $offer = Offer::where('offer_id', $claim->offer_id)->lockForUpdate()->firstOrFail();
 
-            $request->validate([
-                'claim_id' => 'required|exists:claim_offers,id'
-            ]);
-
-            $claim = ClaimOffer::findOrFail($request->claim_id);
-            $offer = Offer::where('offer_id', $claim->offer_id)->firstOrFail();
-
-            if ((int) $offer->user_id !== (int) $user->id || $claim->status !== 'received') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized or invalid state.'
-                ], 403);
+            if ($offer->user_id !== $user->id || $claim->status !== 'received') {
+                return response()->json(['success' => false, 'message' => 'Invalid state'], 403);
             }
 
             $claim->update(['status' => 'completed']);
             $offer->update(['status' => 'completed']);
 
-            $owner   = $offer->user;
-            $claimer = $claim->user;
-            NotificationService::offerCompleted($owner, $claimer, $offer);
+            DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Offer marked as collected successfully.'
-            ]);
+            try {
+                NotificationService::offerCompleted($offer->user, $offer);
+            } catch (\Throwable $e) {
+                Log::warning('Offer completed notification failed', ['error' => $e->getMessage()]);
+            }
 
-        } catch (\Exception $e) {
-            Log::error('ClaimOffer markCollected error: ' . $e->getMessage());
+            return response()->json(['success' => true, 'message' => 'Offer completed']);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to mark collected.'
-            ], 500);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Mark collected error', ['error' => $e->getMessage()]);
+
+            return response()->json(['success' => false, 'message' => 'Failed'], 500);
         }
-    }
-
-    /**
-     * GET ACTIVE CLAIM BY OFFER
-     */
-    public function getByOffer($offerId)
-    {
-        $user = request()->user();
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-        }
-
-        $claim = ClaimOffer::with('user')
-            ->where('offer_id', $offerId)
-            ->whereIn('status', ['active', 'received'])
-            ->first();
-
-        if (!$claim) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No claim found'
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'claim'   => $claim
-        ]);
     }
 }
