@@ -197,4 +197,31 @@ class NotificationService
             ['request_id' => $request->id]
         );
     }
+
+    /* =========================================================
+ | REQUEST (ADMIN ACTION)
+ ========================================================= */
+public static function requestApproved(HelpRequest $request): void
+{
+    self::simple(
+        $request->user,
+        'Request Approved',
+        "Your request '{$request->item_name}' has been approved by the admin.",
+        'request',
+        ['request_id' => $request->id]
+    );
+}
+
+public static function requestRejected(HelpRequest $request): void
+{
+    self::simple(
+        $request->user,
+        'Request Rejected',
+        "Your request '{$request->item_name}' was rejected. Reason: " .
+        ($request->admin_remark ?? 'Not specified.'),
+        'request',
+        ['request_id' => $request->id]
+    );
+}
+
 }
